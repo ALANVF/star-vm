@@ -19,7 +19,7 @@ type
 	TTypeAttr = (hidden, uncounted, strong, native);
 	TTypeAttrs = set of TTypeAttr;
 
-	TType = class abstract
+	TType = class abstract(IBinaryIOWrite)
 	public
 		index: TTypeIndex;
 		attrs: TTypeAttrs;
@@ -27,10 +27,10 @@ type
 
 		constructor create(index_: TTypeIndex; attrs_: TTypeAttrs; typeParams_: TTypeIndexArray);
 
-		procedure write(handle: THandle); virtual;
+		procedure writeToBinary(const bf: TBinaryFile); virtual;
 	end;
 
-	TTypeParam = class(TType, IBinaryIOWrite)
+	TTypeParam = class(TType)
 	public
 		parents: TTypeIndexArray;
 		{hasCond: boolean;
@@ -38,14 +38,12 @@ type
 
 		constructor create(index_: TTypeIndex; attrs_: TTypeAttrs; typeParams_, parents_: TTypeIndexArray);
 
-		procedure write(handle: THandle); override;
-
-		procedure writeToBinary(const bf: TBinaryFile); // override
+		procedure writeToBinary(const bf: TBinaryFile); override;
 	end;
 
 	TTypeErased = class(TType)
 	public
-		procedure write(handle: THandle); override;
+		procedure writeToBinary(const bf: TBinaryFile); override;
 	end;
 
 	TTypeNamespace = class abstract(TType)
@@ -67,7 +65,7 @@ type
 			staticMethods_: TMethodArray);
 		destructor destroy; override;
 
-		procedure write(handle: THandle); override;
+		procedure writeToBinary(const bf: TBinaryFile); override;
 	end;
 
 	TTypeDispatchable = class abstract(TTypeNamespace)
@@ -91,7 +89,7 @@ type
 			instanceMethods_: TMethodArray);
 		destructor destroy; override;
 
-		procedure write(handle: THandle); override;
+		procedure writeToBinary(const bf: TBinaryFile); override;
 	end;
 	
 	TTypeClassLike = class abstract(TTypeDispatchable)
@@ -116,7 +114,7 @@ type
 			parents_: TTypeIndexArray);
 		destructor destroy; override;
 
-		procedure write(handle: THandle); override;
+		procedure writeToBinary(const bf: TBinaryFile); override;
 	end;
 
 	TTypeClass = class(TTypeClassLike)
@@ -144,12 +142,12 @@ type
 			initMethods_: TMethodArray);
 		destructor destroy; override;
 
-		procedure write(handle: THandle); override;
+		procedure writeToBinary(const bf: TBinaryFile); override;
 	end;
 
 	TTypeProtocol = class(TTypeClassLike)
 	public
-		procedure write(handle: THandle); override;
+		procedure writeToBinary(const bf: TBinaryFile); override;
 	end;
 
 	TTypeKind = class abstract(TTypeClassLike)
@@ -160,16 +158,15 @@ type
 	TTypeValueKind = class(TTypeKind)
 	public
 		type
-			TCase = class
+			TCase = class(IBinaryIOWrite)
 			public
 				constant: TConstantIndex;
 				defaultInit: TMethod; {NULLABLE}
 
 				constructor create(constant_: TConstantIndex; defaultInit_: TMethod);
-				// read
 				destructor destroy; override;
 
-				procedure write(handle: THandle);
+				procedure writeToBinary(const bf: TBinaryFile);
 			end;
 			TCaseArray = array of TCase;
 		
@@ -198,23 +195,22 @@ type
 			cases_: TCaseArray);
 		destructor destroy; override;
 
-		procedure write(handle: THandle); override;
+		procedure writeToBinary(const bf: TBinaryFile); override;
 	end;
 
 	TTypeTaggedKind = class(TTypeKind)
 	public
 		type
-			TCase = class
+			TCase = class(IBinaryIOWrite)
 			public
 				selector: TSelectorIndex;
 				slots: TTypeIndexArray;
 				defaultInit: TMethod; {NULLABLE}
 
 				constructor create(selector_: TSelectorIndex; slots_: TTypeIndexArray; defaultInit_: TMethod);
-				// read
 				destructor destroy; override;
 
-				procedure write(handle: THandle);
+				procedure writeToBinary(const bf: TBinaryFile);
 			end;
 			TCaseArray = array of TCase;
 		
@@ -241,7 +237,7 @@ type
 			cases_: TCaseArray);
 		destructor destroy; override;
 
-		procedure write(handle: THandle); override;
+		procedure writeToBinary(const bf: TBinaryFile); override;
 	end;
 
 	TTypeNative = class(TTypeDispatchable)
@@ -283,11 +279,11 @@ begin
 	typeParams := typeParams_;
 end;
 
-procedure TType.write(handle: THandle);
+procedure TType.writeToBinary(const bf: TBinaryFile);
 begin
-	fileWrite(handle, index, sizeof(index));
-	fileWrite(handle, attrs, sizeof(attrs));
-	writeTypeIndexArray(handle, typeParams);
+	bf.write(index);
+	bf.writeOnly(attrs, sizeof(attrs));
+	bf.writeAll(typeParams);
 end;
 
 
@@ -298,34 +294,22 @@ begin
 	parents := parents_;
 end;
 
-procedure TTypeParam.write(handle: THandle);
-const
-	id: TTypeID = TTypeID.param;
-begin
-	fileWrite(handle, id, sizeof(id));
-	
-	inherited write(handle);
-
-	writeTypeIndexArray(handle, parents);
-end;
 
 procedure TTypeParam.writeToBinary(const bf: TBinaryFile);
 begin
 	bf.specialize write<TTypeID>(TTypeID.param);
 	
-	//inherited writeToBinary(bf);
+	inherited writeToBinary(bf);
 	
 	bf.writeAll(parents);
 end;
 
 
-procedure TTypeErased.write(handle: THandle);
-const
-	id: TTypeID = TTypeID.erased;
+procedure TTypeErased.writeToBinary(const bf: TBinaryFile);
 begin
-	fileWrite(handle, id, sizeof(id));
+	bf.specialize write<TTypeID>(TTypeID.erased);
 
-	inherited write(handle);
+	inherited writeToBinary(bf);
 end;
 
 
@@ -361,25 +345,25 @@ begin
 	inherited destroy();
 end;
 
-procedure TTypeNamespace.write(handle: THandle);
+procedure TTypeNamespace.writeToBinary(const bf: TBinaryFile);
 var
 	hasStaticInit, hasStaticDeinit: boolean;
 begin
-	inherited write(handle);
+	inherited writeToBinary(bf);
 	
-	writeTypeIndexArray(handle, nestedTypes);
+	bf.writeAll(nestedTypes);
 	
 	hasStaticInit := staticInit <> nil;
-	fileWrite(handle, hasStaticInit, sizeof(boolean));
-	if hasStaticInit then staticInit.write(handle);
+	bf.write(hasStaticInit);
+	if hasStaticInit then bf.write(staticInit);
 
 	hasStaticDeinit := staticDeinit <> nil;
-	fileWrite(handle, hasStaticDeinit, sizeof(boolean));
-	if hasStaticDeinit then staticDeinit.write(handle);
+	bf.write(hasStaticDeinit);
+	if hasStaticDeinit then bf.write(staticDeinit);
 
-	writeMemberArray(handle, staticMembers);
-	writeSelectorArray(handle, staticSelectors);
-	writeMethodArray(handle, staticMethods);
+	bf.writeAll(IBinaryIOWriteArray(staticMembers));
+	bf.writeAll(IBinaryIOWriteArray(staticSelectors));
+	bf.writeAll(IBinaryIOWriteArray(staticMethods));
 end;
 
 
@@ -414,13 +398,13 @@ begin
 	inherited destroy();
 end;
 
-procedure TTypeDispatchable.write(handle: THandle);
+procedure TTypeDispatchable.writeToBinary(const bf: TBinaryFile);
 begin
-	inherited write(handle);
+	inherited writeToBinary(bf);
 	
-	writeMemberArray(handle, instanceMembers);
-	writeSelectorArray(handle, instanceSelectors);
-	writeMethodArray(handle, instanceMethods);
+	bf.writeAll(IBinaryIOWriteArray(instanceMembers));
+	bf.writeAll(IBinaryIOWriteArray(instanceSelectors));
+	bf.writeAll(IBinaryIOWriteArray(instanceMethods));
 end;
 
 
@@ -455,19 +439,19 @@ begin
 	inherited destroy();
 end;
 
-procedure TTypeClassLike.write(handle: THandle);
+procedure TTypeClassLike.writeToBinary(const bf: TBinaryFile);
 var
 	hasDefaultInit, hasInstanceDeinit: boolean;
 begin
-	inherited write(handle);
+	inherited writeToBinary(bf);
 
 	hasDefaultInit := defaultInit <> nil;
-	fileWrite(handle, hasDefaultInit, sizeof(boolean));
-	if hasDefaultInit then defaultInit.write(handle);
+	bf.write(hasDefaultInit);
+	if hasDefaultInit then bf.write(defaultInit);
 
 	hasInstanceDeinit := instanceDeinit <> nil;
-	fileWrite(handle, hasInstanceDeinit, sizeof(boolean));
-	if hasInstanceDeinit then instanceDeinit.write(handle);
+	bf.write(hasInstanceDeinit);
+	if hasInstanceDeinit then bf.write(instanceDeinit);
 end;
 
 
@@ -509,26 +493,22 @@ begin
 	inherited destroy();
 end;
 
-procedure TTypeClass.write(handle: THandle);
-const
-	id: TTypeID = TTypeID.&class;
+procedure TTypeClass.writeToBinary(const bf: TBinaryFile);
 begin
-	fileWrite(handle, id, sizeof(id));
+	bf.specialize write<TTypeID>(TTypeID.&class);
 
-	inherited write(handle);
+	inherited writeToBinary(bf);
 
-	writeSelectorArray(handle, initSelectors);
-	writeMethodArray(handle, initMethods);
+	bf.writeAll(initSelectors);
+	bf.writeAll(IBinaryIOWriteArray(initMethods));
 end;
 
 
-procedure TTypeProtocol.write(handle: THandle);
-const
-	id: TTypeID = TTypeID.protocol;
+procedure TTypeProtocol.writeToBinary(const bf: TBinaryFile);
 begin
-	fileWrite(handle, id, sizeof(id));
+	bf.specialize write<TTypeID>(TTypeID.protocol);
 
-	inherited write(handle);
+	inherited writeToBinary(bf);
 end;
 
 
@@ -545,15 +525,17 @@ begin
 	inherited destroy();
 end;
 
-procedure TTypeValueKind.TCase.write(handle: THandle);
+procedure TTypeValueKind.TCase.writeToBinary(const bf: TBinaryFile);
 var
 	hasDefaultInit: boolean;
 begin
-	fileWrite(handle, constant, sizeof(constant));
+	bf.write(constant);
+	
 	hasDefaultInit := defaultInit <> nil;
-	fileWrite(handle, hasDefaultInit, sizeof(hasDefaultInit));
-	if hasDefaultInit then defaultInit.write(handle);
+	bf.write(hasDefaultInit);
+	if hasDefaultInit then bf.write(defaultInit);
 end;
+
 
 constructor TTypeValueKind.create(
 	index_: TTypeIndex;
@@ -596,23 +578,15 @@ begin
 	inherited destroy();
 end;
 
-procedure TTypeValueKind.write(handle: THandle);
-const
-	id: TTypeID = TTypeID.valueKind;
-var
-	len: longint;
-	&case: TTypeValueKind.TCase;
+procedure TTypeValueKind.writeToBinary(const bf: TBinaryFile);
 begin
-	fileWrite(handle, id, sizeof(id));
+	bf.specialize write<TTypeID>(TTypeID.valueKind);
 
-	inherited write(handle);
+	inherited writeToBinary(bf);
 	
-	fileWrite(handle, isFlags, sizeof(isFlags));
-	fileWrite(handle, baseType, sizeof(baseType));
-
-	len := length(cases);
-	fileWrite(handle, len, sizeof(len));
-	for &case in cases do &case.write(handle);
+	bf.write(isFlags);
+	bf.write(baseType);
+	bf.writeAll(IBinaryIOWriteArray(cases));
 end;
 
 
@@ -630,16 +604,17 @@ begin
 	inherited destroy();
 end;
 
-procedure TTypeTaggedKind.TCase.write(handle: THandle);
+procedure TTypeTaggedKind.TCase.writeToBinary(const bf: TBinaryFile);
 var
 	hasDefaultInit: boolean;
 begin
-	fileWrite(handle, selector, sizeof(selector));
-	writeTypeIndexArray(handle, slots);
+	bf.write(selector);
+	
+	bf.writeAll(slots);
 
 	hasDefaultInit := defaultInit <> nil;
-	fileWrite(handle, hasDefaultInit, sizeof(hasDefaultInit));
-	if hasDefaultInit then defaultInit.write(handle);
+	bf.write(hasDefaultInit);
+	if hasDefaultInit then bf.write(defaultInit);
 end;
 
 
@@ -682,22 +657,14 @@ begin
 	inherited destroy();
 end;
 
-procedure TTypeTaggedKind.write(handle: THandle);
-const
-	id: TTypeID = TTypeID.taggedKind;
-var
-	len: longint;
-	&case: TTypeTaggedKind.TCase;
+procedure TTypeTaggedKind.writeToBinary(const bf: TBinaryFile);
 begin
-	fileWrite(handle, id, sizeof(id));
+	bf.specialize write<TTypeID>(TTypeID.taggedKind);
 
-	inherited write(handle);
+	inherited writeToBinary(bf);
 	
-	fileWrite(handle, isFlags, sizeof(isFlags));
-
-	len := length(cases);
-	fileWrite(handle, len, sizeof(len));
-	for &case in cases do &case.write(handle);
+	bf.write(isFlags);
+	bf.writeAll(IBinaryIOWriteArray(cases));
 end;
 
 end.

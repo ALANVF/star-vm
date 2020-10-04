@@ -58,6 +58,8 @@ type
 	end;
 	{$pop}
 
+	IBinaryIOWriteArray = array of IBinaryIOWrite;
+
 type
 	//generic TBinaryCustomReadProc<T> = procedure(const bf: TBinaryFile; out value: T);
 	generic TBinaryCustomReadFunc<T> = function(const bf: TBinaryFile): T;

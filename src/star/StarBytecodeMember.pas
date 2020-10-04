@@ -7,13 +7,14 @@ interface
 
 uses
 	StarBytecodeIndex,
-	SysUtils;
+	SysUtils,
+	FileUtils;
 
 type
 	TMemberAttr = (hidden, noinherit, readonly);
 	TMemberAttrs = set of TMemberAttr;
 
-	TMember = class
+	TMember = class(IBinaryIOWrite)
 	public
 		index: TMemberIndex;
 		name: string;
@@ -21,9 +22,10 @@ type
 		attrs: TMemberAttrs;
 
 		constructor create(index_: TMemberIndex; name_: string; type_: TTypeIndex; attrs_: TMemberAttrs);
+		
 		constructor read(handle: THandle);
 
-		procedure write(handle: THandle);
+		procedure writeToBinary(const bf: TBinaryFile);
 	end;
 
 type
@@ -31,8 +33,6 @@ type
 
 procedure readMemberArray(handle: THandle; out arr: TMemberArray); overload;
 function readMemberArray(handle: THandle): TMemberArray; overload;
-
-procedure writeMemberArray(handle: THandle; const arr: TMemberArray);
 
 implementation
 
@@ -44,6 +44,7 @@ begin
 	attrs := attrs_;
 end;
 
+
 constructor TMember.read(handle: THandle);
 begin
 	fileRead(handle, index, sizeof(index));
@@ -52,11 +53,13 @@ begin
 	fileRead(handle, attrs, sizeof(attrs));
 end;
 
-procedure TMember.write(handle: THandle);
+
+procedure TMember.writeToBinary(const bf: TBinaryFile);
 begin
-	fileWrite(handle, index, sizeof(index));
-	fileWrite(handle, &type, sizeof(&type));
-	fileWrite(handle, attrs, sizeof(attrs));
+	bf.write(index);
+	bf.write(name);
+	bf.write(&type);
+	bf.writeOnly(attrs, sizeof(attrs));
 end;
 
 
@@ -80,18 +83,6 @@ begin
 	setLength(result, len);
 	for i := 0 to len do
 		result[i] := TMember.read(handle);
-end;
-
-
-procedure writeMemberArray(handle: THandle; const arr: TMemberArray);
-var
-	len: longint;
-	member: TMember;
-begin
-	len := length(arr);
-	fileWrite(handle, len, sizeof(len));
-	for member in arr do
-		member.write(handle);
 end;
 
 end.

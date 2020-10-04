@@ -7,15 +7,15 @@ uses
 	SysUtils;
 
 type
-	TSelector = type word;
+	TSelector = ansistring;{class(IBinaryIOWrite)
+		..
+	end;}
 
 type
 	TSelectorArray = array of TSelector;
 
 function readSelectorArray(handle: THandle): TSelectorArray;
 procedure readSelectorArray(handle: THandle; out arr: TSelectorArray); overload;
-
-procedure writeSelectorArray(handle: THandle; const arr: TSelectorArray);
 
 implementation
 
@@ -39,18 +39,6 @@ begin
 	setLength(arr, len);
 	for i := 0 to len do
 		fileRead(handle, arr[i], sizeof(arr[i]));
-end;
-
-
-procedure writeSelectorArray(handle: THandle; const arr: TSelectorArray);
-var
-	len: longint;
-	index: TSelector;
-begin
-	len := length(arr);
-	fileWrite(handle, len, sizeof(len));
-	for index in arr do
-		fileWrite(handle, index, sizeof(index));
 end;
 
 end.

@@ -9,12 +9,13 @@ uses
 	StarBytecodeIndex,
 	StarBytecodeOp,
 	StarBytecodeCodeSection,
-	SysUtils;
+	SysUtils,
+	FileUtils;
 
 type
 	// add attrs later
 
-	TMethod = class
+	TMethod = class(IBinaryIOWrite)
 	public
 		typeParams, paramTypes: TTypeIndexArray;
 		returnType: TTypeIndex;
@@ -27,7 +28,7 @@ type
 
 		destructor destroy; override;
 		
-		procedure write(handle: THandle);
+		procedure writeToBinary(const bf: TBinaryFile);
 	end;
 
 type
@@ -35,8 +36,6 @@ type
 
 procedure readMethodArray(handle: THandle; out arr: TMethodArray); overload;
 function readMethodArray(handle: THandle): TMethodArray; overload;
-
-procedure writeMethodArray(handle: THandle; const arr: TMethodArray);
 
 implementation
 
@@ -76,18 +75,13 @@ begin
 end;
 
 
-procedure TMethod.write(handle: THandle);
-var
-	len: longint;
-	sec: TCodeSection;
+procedure TMethod.writeToBinary(const bf: TBinaryFile);
 begin
-	writeTypeIndexArray(handle, typeParams);
-	writeTypeIndexArray(handle, paramTypes);
-	fileWrite(handle, returnType, sizeof(returnType));
-	writeTypeIndexArray(handle, registers);
-	len := length(sections);
-	fileWrite(handle, len, sizeof(len));
-	for sec in sections do sec.write(handle);
+	bf.writeAll(typeParams);
+	bf.writeAll(paramTypes);
+	bf.write(returnType);
+	bf.writeAll(registers);
+	bf.writeAll(IBinaryIOWriteArray(sections));
 end;
 
 
@@ -111,18 +105,6 @@ begin
 	setLength(result, len);
 	for i := 0 to len do
 		result[i] := TMethod.read(handle);
-end;
-
-
-procedure writeMethodArray(handle: THandle; const arr: TMethodArray);
-var
-	len: longint;
-	method: TMethod;
-begin
-	len := length(arr);
-	fileWrite(handle, len, sizeof(len));
-	for method in arr do
-		method.write(handle);
 end;
 
 end.

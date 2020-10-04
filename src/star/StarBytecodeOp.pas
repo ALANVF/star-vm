@@ -8,7 +8,8 @@ interface
 uses
 	StarBytecodeIndex,
 	StarBytecodeOpcode,
-	SysUtils;
+	SysUtils,
+	FileUtils;
 
 type
 	TOp_consecutiveKind = (
@@ -105,9 +106,13 @@ type
 type
 	TOpArray = array of TOp;
 
+
 function dumpOp(op: TOp): string;
+
 procedure disposeOp(var op: TOp);
-procedure writeOp(handle: THandle; const op: TOp);
+
+procedure writeOp(const bf: TBinaryFile; const op: TOp);
+
 function readOp(handle: THandle): TOp;
 
 implementation
@@ -231,30 +236,23 @@ begin
 		end;
 end;
 
-procedure writeOp(handle: THandle; const op: TOp);
-var
-	len: word;
+procedure writeOp(const bf: TBinaryFile; const op: TOp);
 begin
 	if op.opcode in [TOpcode.consecutive, TOpcode.pushSec_table] then begin
-		fileWrite(handle, op.opcode, sizeof(op.opcode));
+		bf.specialize write<TOpcode>(op.opcode);
 
 		case op.opcode of
 			TOpcode.consecutive: with op.consecutive do begin
-				fileWrite(handle, kind, sizeof(kind));
+				bf.specialize write<TOp_consecutiveKind>(kind);
 				
-				len := word(length(sections^));
-				fileWrite(handle, len, sizeof(len));
-				fileWrite(handle, sections^, len * sizeof(TCodeSectionIndex));
+				bf.writeAll(sections^);
 			end;
 
-			TOpcode.pushSec_table: with op do begin
-				len := word(length(pushSec_table^));
-				fileWrite(handle, len, sizeof(len));
-				fileWrite(handle, pushSec_table^, len * sizeof(TCodeSectionIndex));
-			end;
+			TOpcode.pushSec_table: with op do
+				bf.writeAll(pushSec_table^);
 		end;
 	end else
-		fileWrite(handle, op, sizeof(op));
+		bf.specialize write<TOp>(op);
 end;
 
 function readOp(handle: THandle): TOp;

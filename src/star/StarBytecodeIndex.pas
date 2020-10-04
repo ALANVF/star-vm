@@ -36,9 +36,6 @@ function readRegisterIndexArray(handle: THandle): TRegisterIndexArray;
 function readTypeIndexArray(handle: THandle): TTypeIndexArray; overload;
 procedure readTypeIndexArray(handle: THandle; out arr: TTypeIndexArray); overload;
 
-procedure writeRegisterIndexArray(handle: THandle; const arr: TRegisterIndexArray);
-procedure writeTypeIndexArray(handle: THandle; const arr: TTypeIndexArray);
-
 implementation
 
 function dumpSelectorIndex(index: TSelectorIndex): string;
@@ -103,29 +100,6 @@ begin
 	setLength(arr, len);
 	for i := 0 to len do
 		fileRead(handle, arr[i], sizeof(arr[i]));
-end;
-
-
-procedure writeRegisterIndexArray(handle: THandle; const arr: TRegisterIndexArray);
-var
-	len: longint;
-	index: TRegisterIndex;
-begin
-	len := length(arr);
-	fileWrite(handle, len, sizeof(len));
-	for index in arr do
-		fileWrite(handle, index, sizeof(index));
-end;
-
-procedure writeTypeIndexArray(handle: THandle; const arr: TTypeIndexArray);
-var
-	len: longint;
-	index: TTypeIndex;
-begin
-	len := length(arr);
-	fileWrite(handle, len, sizeof(len));
-	for index in arr do
-		fileWrite(handle, index, sizeof(index));
 end;
 
 end.

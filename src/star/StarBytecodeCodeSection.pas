@@ -5,19 +5,22 @@ interface
 uses
 	StarBytecodeIndex,
 	StarBytecodeOp,
-	SysUtils;
+	SysUtils,
+	FileUtils;
 
 type
-	TCodeSection = class
+	TCodeSection = class(IBinaryIOWrite)
 	public
 		ops: TOpArray;
 
 		constructor create;
 		constructor create(const ops_: TOpArray);
+
 		constructor read(handle: THandle);
+		
 		destructor destroy; override;
 
-		procedure write(handle: THandle);
+		procedure writeToBinary(const bf: TBinaryFile);
 	end;
 
 type
@@ -35,6 +38,7 @@ begin
 	ops := ops_;
 end;
 
+
 constructor TCodeSection.read(handle: THandle);
 var
 	len, i: longint;
@@ -44,6 +48,7 @@ begin
 	for i := 0 to len do ops[i] := readOp(handle);
 end;
 
+
 destructor TCodeSection.destroy;
 var
 	i: integer;
@@ -52,14 +57,10 @@ begin
 	inherited destroy();
 end;
 
-procedure TCodeSection.write(handle: THandle);
-var
-	len: longint;
-	op: TOp;
+
+procedure TCodeSection.writeToBinary(const bf: TBinaryFile);
 begin
-	len := length(ops);
-	fileWrite(handle, len, sizeof(len));
-	for op in ops do writeOp(handle, op);
+	bf.specialize writeAll<TOp>(ops, @writeOp);
 end;
 
 end.
