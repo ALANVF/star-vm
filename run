@@ -1,0 +1,4 @@
+#!/bin/sh
+
+[ "$(ls -A out)" ] && rm out/*
+fpc -FEout -Fusrc/* -S2cah -v0wn src/main.pas && out/main

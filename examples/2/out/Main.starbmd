@@ -1,0 +1,51 @@
+%1 = use Star.Void
+%2 = use Star.Core
+%3 = use Star.Core.Int
+%4 = use Star.Core.Bool
+
+&1 = Int 0
+&2 = Int 1
+&3 = Int 5
+
+#1 = fact:
+#2 = main
+
+module Main is main {
+	on #1 [$1 (%3)] (%3) is static {
+		my $2 (%3)
+		
+		@0 {
+			push $1
+			push &1
+			eq
+			csec_either @1, @2
+		}
+
+		@1 {
+			push $1
+			push &2
+			sub
+			send %0, #1
+			set $2
+			push $1
+			push $2
+			mult
+			return
+		}
+
+		@2 {
+			push &2
+			return
+		}
+	}
+	
+	on #2 [] is main is static {
+
+		@0 {
+			push &3
+			send %0, #1
+			send %2, #2
+			return void
+		}
+	}
+}
