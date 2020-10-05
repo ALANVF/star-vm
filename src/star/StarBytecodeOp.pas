@@ -1,7 +1,8 @@
 unit StarBytecodeOp;
 
-{$SCOPEDENUMS+}
-{$MINENUMSIZE 1}
+{$scopedEnums+}
+{$minEnumSize 1}
+{$modeSwitch ADVANCEDRECORDS}
 
 interface
 
@@ -12,25 +13,34 @@ uses
 	FileUtils;
 
 type
-	TOp_consecutiveKind = (
-		all,
-		any,
-		one,
-		none
-	);
-	TOp_debugKind = (
-		inspectEverything,
-		inspectRegs,
-		inspectStack,
-		inspectCallStack,
-		inspectCodeSectionStack,
-		inspectReg,
-		inspectConst,
-		inspectType
-	);
-
-type
 	TOp = packed record
+	public
+		type
+			TConsecutiveKind = (
+				all,
+				any,
+				one,
+				none
+			);
+
+			TTrapCase = record
+				destReg: TRegisterIndex;
+				section: TCodeSectionIndex;
+			end;
+			TTrapCases = array of TTrapCase;
+			PTrapCases = ^TTrapCases;
+
+			TDebugKind = (
+				inspectEverything,
+				inspectRegs,
+				inspectStack,
+				inspectCallStack,
+				inspectCodeSectionStack,
+				inspectReg,
+				inspectConst,
+				inspectType
+			);	
+	public
 		case opcode: TOpcode of
 			TOpcode.retain, TOpcode.release, TOpcode.pop, TOpcode.clear, TOpcode.swap, TOpcode.add..TOpcode.truthy,
 			TOpcode.give, TOpcode.popSec, TOpcode.unreachable..TOpcode.retVoid, TOpcode.popTrap, TOpcode.panic,
@@ -56,7 +66,7 @@ type
 			TOpcode.incr, TOpcode.decr: (step: TRegisterIndex);
 			
 			TOpcode.consecutive: (consecutive: record
-				kind: TOp_consecutiveKind;
+				kind: TConsecutiveKind;
 				sections: PCodeSectionIndexArray;
 			end);
 			
@@ -82,6 +92,11 @@ type
 				catchDest: TRegisterIndex;
 				catchSection: TCodeSectionIndex;
 			end);
+
+			TOpcode.pushTrapN: (pushTrapN: record
+				trySection: TCodeSectionIndex;
+				cases: PTrapCases;
+			end);
 			
 			TOpcode.staticSend: (staticSend: record
 				&type: TTypeIndex;
@@ -95,11 +110,11 @@ type
 			TOpcode.getKindSlot: (getKindSlot: byte);
 			
 			TOpcode.debug: (debug: record
-				case kind: TOp_debugKind of
-					TOp_debugKind.inspectEverything..TOp_debugKind.inspectCodeSectionStack: ();
-					TOp_debugKind.inspectReg: (r: TRegisterIndex);
-					TOp_debugKind.inspectConst: (c: TConstantIndex);
-					TOp_debugKind.inspectType: (t: TTypeIndex);
+				case kind: TDebugKind of
+					TDebugKind.inspectEverything..TDebugKind.inspectCodeSectionStack: ();
+					TDebugKind.inspectReg: (r: TRegisterIndex);
+					TDebugKind.inspectConst: (c: TConstantIndex);
+					TDebugKind.inspectType: (t: TTypeIndex);
 			end);
 	end;
 
@@ -199,6 +214,16 @@ begin
 				result += dumpCodeSectionIndex(catchSection);
 			end;
 
+			TOpcode.pushTrapN: with pushTrapN do begin
+				result += dumpCodeSectionIndex(trySection);
+				for i := 0 to high(cases^) do begin
+					result += ', ';
+					result += dumpRegisterIndex(cases^[i].destReg);
+					result += ' sec ';
+					result += dumpCodeSectionIndex(cases^[i].section);
+				end;
+			end;
+
 			TOpcode.staticSend: with staticSend do begin
 				result += dumpTypeIndex(&type);
 				result += ', ';
@@ -217,9 +242,9 @@ begin
 				result += opStr;
 
 				case debug.kind of
-					TOp_debugKind.inspectReg: result += ' ' + dumpRegisterIndex(debug.r);
-					TOp_debugKind.inspectConst: result += ' ' + dumpConstantIndex(debug.c);
-					TOp_debugKind.inspectType: result += ' ' + dumpTypeIndex(debug.t);
+					TOp.TDebugKind.inspectReg: result += ' ' + dumpRegisterIndex(debug.r);
+					TOp.TDebugKind.inspectConst: result += ' ' + dumpConstantIndex(debug.c);
+					TOp.TDebugKind.inspectType: result += ' ' + dumpTypeIndex(debug.t);
 				end;
 			end;
 		end;
@@ -233,6 +258,7 @@ begin
 		case opcode of
 			TOpcode.consecutive: freeMemAndNil(consecutive.sections);
 			TOpcode.pushSec_table: freeMemAndNil(pushSec_table);
+			TOpcode.pushTrapN: freeMemAndNil(pushTrapN.cases);
 		end;
 end;
 
@@ -243,13 +269,19 @@ begin
 
 		case op.opcode of
 			TOpcode.consecutive: with op.consecutive do begin
-				bf.specialize write<TOp_consecutiveKind>(kind);
+				bf.specialize write<TOp.TConsecutiveKind>(kind);
 				
 				bf.writeAll(sections^);
 			end;
 
 			TOpcode.pushSec_table: with op do
 				bf.writeAll(pushSec_table^);
+			
+			TOpcode.pushTrapN: with op.pushTrapN do begin
+				bf.write(trySection);
+
+				bf.specialize writeAll<TOp.TTrapCase>(cases^);
+			end;
 		end;
 	end else
 		bf.specialize write<TOp>(op);
@@ -280,6 +312,16 @@ begin
 				setLength(pushSec_table^, len);
 				for i := 0 to len-1 do
 					fileRead(handle, pushSec_table^[i], sizeof(TCodeSectionIndex));
+			end;
+
+			TOpcode.pushTrapN: with pushTrapN do begin
+				fileRead(handle, trySection, sizeof(trySection));
+				
+				fileRead(handle, len, sizeof(len));
+				new(cases);
+				setLength(cases^, len);
+				for i := 0 to len-1 do
+					fileRead(handle, cases^[i], sizeof(TCodeSectionIndex));
 			end;
 		end;
 	end else

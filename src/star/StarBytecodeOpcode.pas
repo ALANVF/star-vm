@@ -76,6 +76,7 @@ type
 		retVoid,               { return }                                                                            // METHOD TERMINATOR
 
 		pushTrap,              { try ... catch ... }
+		pushTrapN,             { try ... catch ... catch ... }
 		popTrap,               { ... }                                                                               // TRAP TERMINATOR
 		panic,                 { panic value }                                                                       // MULTI-SECTION TERMINATOR
 
@@ -146,7 +147,7 @@ begin
 		TOpcode.unreachable: result := 'unreachable';
 		TOpcode.ret: result := 'return';
 		TOpcode.retVoid: result := 'return void';
-		TOpcode.pushTrap: result := 'trap';
+		TOpcode.pushTrap, TOpcode.pushTrapN: result := 'trap';
 		TOpcode.popTrap: result := 'ptrap';
 		TOpcode.panic: result := 'panic';
 		TOpcode.staticSend, TOpcode.objSend: result := 'send';
