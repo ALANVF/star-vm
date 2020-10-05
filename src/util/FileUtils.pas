@@ -93,15 +93,16 @@ type
 		{$define M_BEGIN :=  procedure read(out buffer:  }
 		{$define M_END   :=  ); overload;                }
 			M_FOR_ALL_TYPES
+		generic procedure read<T>(out buffer: T); overload;
 
 		procedure readOnly(out buffer; count: longint);
 
 		{$define M_BEGIN :=   procedure readAll(out buffer: specialize TArray<  }
 		{$define M_END   :=   >); overload;                                     }
 			M_FOR_ALL_READ_TYPES
-		//generic procedure readAll<T>(out buffer: specialize TArray<T>); overload;
+		generic procedure readAll<T>(out buffer: specialize TArray<T>); overload;
 		//generic procedure readAll<T>(out buffer: specialize TArray<T>; size: longint); overload;
-		generic procedure readAll<T>(out buffer: specialize TArray<T>; const func: specialize TBinaryCustomReadFunc<T>); //overload;
+		generic procedure readAll<T>(out buffer: specialize TArray<T>; const func: specialize TBinaryCustomReadFunc<T>); overload;
 
 		function seek(foffset, origin: longint): longint; overload;
 		function seek(foffset: int64; origin: longint): int64; overload;
@@ -121,7 +122,7 @@ type
 		{$define M_BEGIN :=   procedure writeAll(const buffer: specialize TArray<  }
 		{$define M_END   :=   >); overload;                                        }
 			M_FOR_ALL_WRITE_TYPES
-		generic procedure writeAll<T>(const buffer); overload;
+		generic procedure writeAll<T>(const buffer: specialize TArray<T>); overload;
 		//generic procedure writeAll<T>(const buffer: specialize TArray<T>; size: longint); overload;
 		generic procedure writeAll<T>(const buffer: specialize TArray<T>; const proc: specialize TBinaryCustomWriteProc<T>); overload;
 	end;
@@ -235,6 +236,11 @@ end;
 {$define M_END   :=  ); overload; begin fileRead(handle, buffer, sizeof(buffer)); end;  }
 	M_FOR_ALL_TYPES
 
+generic procedure TBinaryFile.read<T>(out buffer: T);
+begin
+	fileRead(handle, buffer, sizeof(buffer));
+end;
+
 
 procedure TBinaryFile.readOnly(out buffer; count: longint);
 begin
@@ -242,6 +248,7 @@ begin
 end;
 
 
+// TODO: optimize this for numeric types
 {$define M_BEGIN :=   procedure TBinaryFile.readAll(out buffer: specialize TArray<  }
 {$define M_END   :=
 	>); overload;
@@ -259,18 +266,23 @@ end;
 }
 	M_FOR_ALL_READ_TYPES
 
-{generic procedure TBinaryFile.readAll<T>(out buffer: specialize TArray<T>); overload;
+generic procedure TBinaryFile.readAll<T>(out buffer: specialize TArray<T>); overload;
+type
+	TElems = specialize TArray<T>;
 var
 	i, len: longint;
+	_buffer: TElems;
 begin
-	buffer := [];
+	_buffer := [];
 	
 	fileRead(handle, len, sizeof(len));
-	setLength(buffer, len);
+	setLength(_buffer, len);
 	
 	for i := 0 to len do
-		self.specialize read<T>(buffer[i]);
-end;}
+		self.specialize read<T>(_buffer[i]);
+
+	buffer := _buffer;
+end;
 
 {generic procedure TBinaryFile.readAll<T>(out buffer: specialize TArray<T>; size: longint); overload;
 var
@@ -285,7 +297,7 @@ begin
 		self.readOnly(buffer[i], size);
 end;}
 
-generic procedure TBinaryFile.readAll<T>(out buffer: specialize TArray<T>; const func: specialize TBinaryCustomReadFunc<T>); //overload;
+generic procedure TBinaryFile.readAll<T>(out buffer: specialize TArray<T>; const func: specialize TBinaryCustomReadFunc<T>); overload;
 var
 	i, len: longint;
 begin
@@ -356,6 +368,7 @@ begin
 end;
 
 
+// TODO: optimize this for numeric types
 {$define M_BEGIN :=   procedure TBinaryFile.writeAll(const buffer: specialize TArray<  }
 {$define M_END   :=
 	>); overload;
@@ -371,21 +384,15 @@ end;
 }
 	M_FOR_ALL_WRITE_TYPES
 
-
-generic procedure TBinaryFile.writeAll<T>(const buffer); overload;
-type
-	TElems = specialize TArray<T>;
+generic procedure TBinaryFile.writeAll<T>(const buffer: specialize TArray<T>); overload;
 var
 	i, len: longint;
-	_buffer: TElems;
 begin
-	_buffer := TElems(buffer);
-
-	len := length(_buffer);
+	len := length(buffer);
 	fileWrite(handle, len, sizeof(len));
 	
 	for i := 0 to len do
-		self.specialize write<T>(_buffer[i]);
+		self.specialize write<T>(buffer[i]);
 end;
 
 {generic procedure TBinaryFile.writeAll<T>(const buffer: specialize TArray<T>; size: longint); overload;
@@ -409,6 +416,5 @@ begin
 	for i := 0 to len do
 		proc(self, buffer[i]);
 end;
-
 
 end.

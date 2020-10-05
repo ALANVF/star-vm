@@ -1,12 +1,11 @@
-program star_pas_test;
-
-{ $modeswitch TYPEHELPERS}
-{ $SCOPEDENUMS+}
+program star_vm_test;
 
 uses
 	StringUtils,
 	FileUtils,
 	Star,
+	StarBytecode,
+	StarBytecodeCodeSection,
 	StarBytecodeOp,
 	StarBytecodeOpcode,
 	StarBytecodeMember;
@@ -14,21 +13,13 @@ uses
 type
 	TBuf = array[0..sizeof(TOp)] of byte;
 	PBuf = ^TBuf;
-	TArrOfInt = array of integer;
-	P_ArrOfInt = array[0..(3 * sizeof(integer))] of byte;
-	PArrOfInt = ^P_ArrOfInt;
 
 var
 	op: TOp;
 	s: string;
 	b: byte;
-	a: TArrOfInt;
 
 begin
-	{writeln(sizeof(Star.TStarType));
-	writeln('yay!');
-	writeln(StringUtils.hash('yay!'));}
-
 	with op do begin
 		opcode := TOpcode.pushConst;
 		pushConst := 5;
@@ -42,7 +33,4 @@ begin
 	str(op.opcode, s);
 	writeln(s);
 	writeln(dumpOp(op));
-	
-	{a := [5,10,15,20];
-	for b in (PArrOfInt(a) - word(1))^ do writeln(b);}
 end.
