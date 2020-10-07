@@ -2,7 +2,7 @@ unit StarBytecodeOp;
 
 {$scopedEnums+}
 {$minEnumSize 1}
-{$modeSwitch ADVANCEDRECORDS}
+{ $modeSwitch ADVANCEDRECORDS}
 
 interface
 
@@ -13,34 +13,32 @@ uses
 	FileUtils;
 
 type
+	TConsecutiveKind = (
+		all,
+		any,
+		one,
+		none
+	);
+
+	TTrapCase = record
+		destReg: TRegisterIndex;
+		section: TCodeSectionIndex;
+	end;
+	TTrapCases = array of TTrapCase;
+	PTrapCases = ^TTrapCases;
+
+	TDebugKind = (
+		inspectEverything,
+		inspectRegs,
+		inspectStack,
+		inspectCallStack,
+		inspectCodeSectionStack,
+		inspectReg,
+		inspectConst,
+		inspectType
+	);	
+
 	TOp = packed record
-	public
-		type
-			TConsecutiveKind = (
-				all,
-				any,
-				one,
-				none
-			);
-
-			TTrapCase = record
-				destReg: TRegisterIndex;
-				section: TCodeSectionIndex;
-			end;
-			TTrapCases = array of TTrapCase;
-			PTrapCases = ^TTrapCases;
-
-			TDebugKind = (
-				inspectEverything,
-				inspectRegs,
-				inspectStack,
-				inspectCallStack,
-				inspectCodeSectionStack,
-				inspectReg,
-				inspectConst,
-				inspectType
-			);	
-	public
 		case opcode: TOpcode of
 			TOpcode.retain, TOpcode.release, TOpcode.pop, TOpcode.clear, TOpcode.swap, TOpcode.add..TOpcode.truthy,
 			TOpcode.give, TOpcode.popSec, TOpcode.unreachable..TOpcode.retVoid, TOpcode.popTrap, TOpcode.panic,
@@ -242,9 +240,9 @@ begin
 				result += opStr;
 
 				case debug.kind of
-					TOp.TDebugKind.inspectReg: result += ' ' + dumpRegisterIndex(debug.r);
-					TOp.TDebugKind.inspectConst: result += ' ' + dumpConstantIndex(debug.c);
-					TOp.TDebugKind.inspectType: result += ' ' + dumpTypeIndex(debug.t);
+					TDebugKind.inspectReg: result += ' ' + dumpRegisterIndex(debug.r);
+					TDebugKind.inspectConst: result += ' ' + dumpConstantIndex(debug.c);
+					TDebugKind.inspectType: result += ' ' + dumpTypeIndex(debug.t);
 				end;
 			end;
 		end;
@@ -269,7 +267,7 @@ begin
 
 		case op.opcode of
 			TOpcode.consecutive: with op.consecutive do begin
-				bf.specialize write<TOp.TConsecutiveKind>(kind);
+				bf.specialize write<TConsecutiveKind>(kind);
 				
 				bf.writeAll(sections^);
 			end;
@@ -280,7 +278,7 @@ begin
 			TOpcode.pushTrapN: with op.pushTrapN do begin
 				bf.write(trySection);
 
-				bf.specialize writeAll<TOp.TTrapCase>(cases^);
+				bf.specialize writeAll<TTrapCase>(cases^);
 			end;
 		end;
 	end else

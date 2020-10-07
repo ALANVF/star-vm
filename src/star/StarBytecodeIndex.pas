@@ -16,7 +16,7 @@ type
 type
 	TConstantIndexArray = array of TConstantIndex;
 	TRegisterIndexArray = array of TRegisterIndex;
-	TTypeIndexArray = specialize TArray<TTypeIndex>;//array of TTypeIndex;
+	TTypeIndexArray = {specialize TArray<TTypeIndex>;//}array of TTypeIndex;
 	TCodeSectionIndexArray = array of TCodeSectionIndex;
 
 type

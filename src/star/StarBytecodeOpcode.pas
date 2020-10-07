@@ -6,6 +6,10 @@ unit StarBytecodeOpcode;
 interface
 
 type
+	{TODO:
+	- lazy jumptable op
+	- select op
+	}
 	TOpcode = (
 		retain,                { ... }
 		release,               { ... }

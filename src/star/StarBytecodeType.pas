@@ -16,16 +16,17 @@ uses
 type
 	TTypeID = (param, erased, module, &class, protocol, valueKind, taggedKind, native);
 	
-	TTypeAttr = (hidden, uncounted, strong, native);
+	TTypeAttr = (hidden, uncounted, strong, main);
 	TTypeAttrs = set of TTypeAttr;
 
 	TType = class abstract(IBinaryIOWrite)
 	public
 		index: TTypeIndex;
+		name: shortstring;
 		attrs: TTypeAttrs;
 		typeParams: TTypeIndexArray;
 
-		constructor create(index_: TTypeIndex; attrs_: TTypeAttrs; typeParams_: TTypeIndexArray);
+		constructor create(index_: TTypeIndex; name_: shortstring; attrs_: TTypeAttrs; typeParams_: TTypeIndexArray);
 
 		procedure writeToBinary(const bf: TBinaryFile); virtual;
 	end;
@@ -36,7 +37,7 @@ type
 		{hasCond: boolean;
 		cond: ...}
 
-		constructor create(index_: TTypeIndex; attrs_: TTypeAttrs; typeParams_, parents_: TTypeIndexArray);
+		constructor create(index_: TTypeIndex; name_: shortstring; attrs_: TTypeAttrs; typeParams_, parents_: TTypeIndexArray);
 
 		procedure writeToBinary(const bf: TBinaryFile); override;
 	end;
@@ -56,6 +57,7 @@ type
 		
 		constructor create(
 			index_: TTypeIndex;
+			name_: shortstring;
 			attrs_: TTypeAttrs;
 			typeParams_, nestedTypes_: TTypeIndexArray;
 
@@ -68,6 +70,11 @@ type
 		procedure writeToBinary(const bf: TBinaryFile); override;
 	end;
 
+	TTypeModule = class(TTypeNamespace)
+	public
+		procedure writeToBinary(const bf: TBinaryFile); override;
+	end;
+
 	TTypeDispatchable = class abstract(TTypeNamespace)
 	public
 		instanceMembers: TMemberArray;
@@ -76,6 +83,7 @@ type
 
 		constructor create(
 			index_: TTypeIndex;
+			name_: shortstring;
 			attrs_: TTypeAttrs;
 			typeParams_, nestedTypes_: TTypeIndexArray;
 
@@ -99,6 +107,7 @@ type
 
 		constructor create(
 			index_: TTypeIndex;
+			name_: shortstring;
 			attrs_: TTypeAttrs;
 			typeParams_, nestedTypes_: TTypeIndexArray;
 
@@ -124,6 +133,7 @@ type
 
 		constructor create(
 			index_: TTypeIndex;
+			name_: shortstring;
 			attrs_: TTypeAttrs;
 			typeParams_, nestedTypes_: TTypeIndexArray;
 
@@ -176,6 +186,7 @@ type
 		
 		constructor create(
 			index_: TTypeIndex;
+			name_: shortstring;
 			attrs_: TTypeAttrs;
 			typeParams_, nestedTypes_: TTypeIndexArray;
 
@@ -219,6 +230,7 @@ type
 		
 		constructor create(
 			index_: TTypeIndex;
+			name_: shortstring;
 			attrs_: TTypeAttrs;
 			typeParams_, nestedTypes_: TTypeIndexArray;
 
@@ -272,9 +284,10 @@ type
 
 implementation
 
-constructor TType.create(index_: TTypeIndex; attrs_: TTypeAttrs; typeParams_: TTypeIndexArray);
+constructor TType.create(index_: TTypeIndex; name_: shortstring; attrs_: TTypeAttrs; typeParams_: TTypeIndexArray);
 begin
 	index := index_;
+	name := name_;
 	attrs := attrs_;
 	typeParams := typeParams_;
 end;
@@ -282,14 +295,15 @@ end;
 procedure TType.writeToBinary(const bf: TBinaryFile);
 begin
 	bf.write(index);
+	bf.write(name);
 	bf.writeOnly(attrs, sizeof(attrs));
 	bf.writeAll(typeParams);
 end;
 
 
-constructor TTypeParam.create(index_: TTypeIndex; attrs_: TTypeAttrs; typeParams_, parents_: TTypeIndexArray);
+constructor TTypeParam.create(index_: TTypeIndex; name_: shortstring; attrs_: TTypeAttrs; typeParams_, parents_: TTypeIndexArray);
 begin
-	inherited create(index_, attrs_, typeParams_);
+	inherited create(index_, name_, attrs_, typeParams_);
 
 	parents := parents_;
 end;
@@ -315,6 +329,7 @@ end;
 
 constructor TTypeNamespace.create(
 	index_: TTypeIndex;
+	name_: shortstring;
 	attrs_: TTypeAttrs;
 	typeParams_, nestedTypes_: TTypeIndexArray;
 
@@ -323,7 +338,7 @@ constructor TTypeNamespace.create(
 	staticSelectors_: TSelectorArray;
 	staticMethods_: TMethodArray);
 begin
-	inherited create(index_, attrs_, typeParams_);
+	inherited create(index_, name_, attrs_, typeParams_);
 
 	nestedTypes := nestedTypes_;
 	staticInit := staticInit_;
@@ -335,7 +350,7 @@ end;
 
 destructor TTypeNamespace.destroy;
 var
-	i: integer;
+	i: longint;
 begin
 	if staticInit <> nil then freeAndNil(staticInit);
 	if staticDeinit <> nil then freeAndNil(staticDeinit);
@@ -367,8 +382,17 @@ begin
 end;
 
 
+procedure TTypeModule.writeToBinary(const bf: TBinaryFile);
+begin
+	bf.specialize write<TTypeID>(TTypeID.module);
+
+	inherited writeToBinary(bf);
+end;
+
+
 constructor TTypeDispatchable.create(
 	index_: TTypeIndex;
+	name_: shortstring;
 	attrs_: TTypeAttrs;
 	typeParams_, nestedTypes_: TTypeIndexArray;
 
@@ -381,7 +405,10 @@ constructor TTypeDispatchable.create(
 	instanceSelectors_: TSelectorArray;
 	instanceMethods_: TMethodArray);
 begin
-	inherited create(index_, attrs_, typeParams_, nestedTypes_, staticInit_, staticDeinit_, staticMembers_, staticSelectors_, staticMethods_);
+	inherited create(
+		index_, name_, attrs_, typeParams_,
+		nestedTypes_, staticInit_, staticDeinit_, staticMembers_, staticSelectors_, staticMethods_
+	);
 
 	instanceMembers := instanceMembers_;
 	instanceSelectors := instanceSelectors_;
@@ -410,6 +437,7 @@ end;
 
 constructor TTypeClassLike.create(
 	index_: TTypeIndex;
+	name_: shortstring;
 	attrs_: TTypeAttrs;
 	typeParams_, nestedTypes_: TTypeIndexArray;
 
@@ -424,7 +452,11 @@ constructor TTypeClassLike.create(
 	defaultInit_, instanceDeinit_: TMethod;
 	parents_: TTypeIndexArray);
 begin
-	inherited create(index_, attrs_, typeParams_, nestedTypes_, staticInit_, staticDeinit_, staticMembers_, staticSelectors_, staticMethods_, instanceMembers_, instanceSelectors_, instanceMethods_);
+	inherited create(
+		index_, name_, attrs_, typeParams_,
+		nestedTypes_, staticInit_, staticDeinit_, staticMembers_, staticSelectors_, staticMethods_,
+		instanceMembers_, instanceSelectors_, instanceMethods_
+	);
 
 	defaultInit := defaultInit_;
 	instanceDeinit := instanceDeinit_;
@@ -457,6 +489,7 @@ end;
 
 constructor TTypeClass.create(
 	index_: TTypeIndex;
+	name_: shortstring;
 	attrs_: TTypeAttrs;
 	typeParams_, nestedTypes_: TTypeIndexArray;
 
@@ -475,7 +508,7 @@ constructor TTypeClass.create(
 	initMethods_: TMethodArray);
 begin
 	inherited create(
-		index_, attrs_, typeParams_,
+		index_, name_, attrs_, typeParams_,
 		nestedTypes_, staticInit_, staticDeinit_, staticMembers_, staticSelectors_, staticMethods_,
 		instanceMembers_, instanceSelectors_, instanceMethods_, defaultInit_, instanceDeinit_, parents_
 	);
@@ -539,6 +572,7 @@ end;
 
 constructor TTypeValueKind.create(
 	index_: TTypeIndex;
+	name_: shortstring;
 	attrs_: TTypeAttrs;
 	typeParams_, nestedTypes_: TTypeIndexArray;
 
@@ -558,7 +592,7 @@ constructor TTypeValueKind.create(
 	cases_: TTypeValueKind.TCaseArray);
 begin
 	inherited create(
-		index_, attrs_, typeParams_,
+		index_, name_, attrs_, typeParams_,
 		nestedTypes_, staticInit_, staticDeinit_, staticMembers_, staticSelectors_, staticMethods_,
 		instanceMembers_, instanceSelectors_, instanceMethods_, defaultInit_, instanceDeinit_, parents_
 	);
@@ -620,6 +654,7 @@ end;
 
 constructor TTypeTaggedKind.create(
 	index_: TTypeIndex;
+	name_: shortstring;
 	attrs_: TTypeAttrs;
 	typeParams_, nestedTypes_: TTypeIndexArray;
 
@@ -638,7 +673,7 @@ constructor TTypeTaggedKind.create(
 	cases_: TTypeTaggedKind.TCaseArray);
 begin
 	inherited create(
-		index_, attrs_, typeParams_,
+		index_, name_, attrs_, typeParams_,
 		nestedTypes_, staticInit_, staticDeinit_, staticMembers_, staticSelectors_, staticMethods_,
 		instanceMembers_, instanceSelectors_, instanceMethods_, defaultInit_, instanceDeinit_, parents_
 	);

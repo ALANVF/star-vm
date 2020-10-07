@@ -21,6 +21,8 @@ type
 		destructor destroy; override;
 
 		procedure writeToBinary(const bf: TBinaryFile);
+
+		function dump: string;
 	end;
 
 type
@@ -61,6 +63,21 @@ end;
 procedure TCodeSection.writeToBinary(const bf: TBinaryFile);
 begin
 	bf.specialize writeAll<TOp>(ops, @writeOp);
+end;
+
+
+function TCodeSection.dump: string;
+const
+	sep = string(lineEnding) + #9 + #9 + #9;
+var
+	op: TOp;
+begin
+	result := '';
+
+	for op in ops do begin
+		result += sep;
+		result += dumpOp(op);
+	end;
 end;
 
 end.

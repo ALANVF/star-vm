@@ -9,9 +9,12 @@ uses
 	StarBytecodeIndex,
 	StarBytecodeOpcode,
 	StarBytecodeOp,
-	StarBytecodeMethod,
+	StarBytecodeSelector,
 	StarBytecodeMember,
-	StarBytecodeType;
+	StarBytecodeCodeSection,
+	StarBytecodeMethod,
+	StarBytecodeType,
+	StarBytecodeBuilder;
 
 implementation
 
