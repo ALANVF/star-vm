@@ -11,13 +11,14 @@ uses
 	StarBytecodeMember,
 	StarBytecodeMethod,
 	StarBytecodeSelector,
+	StarBytecodeNativeRepr,
 	SysUtils,
 	FileUtils;
 
 type
 	TTypeID = (param, erased, module, &class, protocol, valueKind, taggedKind, native);
 	
-	TTypeAttr = (hidden, uncounted, strong, main);
+	TTypeAttr = (hidden, uncounted, strong, main, flags);
 	TTypeAttrs = set of TTypeAttr;
 
 	TType = class abstract(IBinaryIOWrite)
@@ -162,8 +163,6 @@ type
 	end;
 
 	TTypeKind = class abstract(TTypeClassLike)
-	public
-		isFlags: boolean;
 	end;
 
 	TTypeValueKind = class(TTypeKind)
@@ -202,7 +201,6 @@ type
 			defaultInit_, instanceDeinit_: TMethod;
 			parents_: TTypeIndexArray;
 			
-			isFlags_: boolean;
 			baseType_: TTypeIndex;
 			cases_: TCaseArray);
 		destructor destroy; override;
@@ -245,8 +243,7 @@ type
 			instanceMethods_: TMethodArray;
 			defaultInit_, instanceDeinit_: TMethod;
 			parents_: TTypeIndexArray;
-			
-			isFlags_: boolean;
+
 			cases_: TCaseArray);
 		destructor destroy; override;
 
@@ -255,32 +252,25 @@ type
 
 	TTypeNative = class(TTypeDispatchable)
 	public
-		type
-			TRepr = (
-				{ basic types }
-				void,
-				int1, uint1, bool,
-				uint8, int8, char,
-				uint16, int16,
-				uint32, int32,
-				uint64, int64,
-				//uint128, int128,          { UNUSED }
-				//dec16,                    { UNUSED }
-				dec32,
-				dec64,
-				//dec128,                   { UNUSED }
-				
-				{ compound types }
-				ptr,
-				voidptr,
-				funcptr,
-				//struct,                   { UNUSED }
-				
-				{ pascal-specific types }
-				pascalStringPtr,
-				pascalArrayPtr
-			);
+		repr: TNativeRepr;
+		
+		constructor create(
+			index_: TTypeIndex;
+			name_: shortstring;
+			attrs_: TTypeAttrs;
+			typeParams_: TTypeIndexArray;
 
+			staticMembers_: TMemberArray;
+			staticSelectors_: TSelectorArray;
+			staticMethods_: TMethodArray;
+			
+			instanceMembers_: TMemberArray;
+			instanceSelectors_: TSelectorArray;
+			instanceMethods_: TMethodArray;
+			
+			repr_: TNativeRepr);
+		
+		procedure writeToBinary(const bf: TBinaryFile); override;
 	end;
 
 implementation
@@ -593,7 +583,6 @@ constructor TTypeValueKind.create(
 	defaultInit_, instanceDeinit_: TMethod;
 	parents_: TTypeIndexArray;
 	
-	isFlags_: boolean;
 	baseType_: TTypeIndex;
 	cases_: TTypeValueKind.TCaseArray);
 begin
@@ -603,7 +592,6 @@ begin
 		instanceMembers_, instanceSelectors_, instanceMethods_, defaultInit_, instanceDeinit_, parents_
 	);
 
-	isFlags := isFlags_;
 	baseType := baseType_;
 	cases := cases_;
 end;
@@ -624,7 +612,6 @@ begin
 
 	inherited writeToBinary(bf);
 	
-	bf.write(isFlags);
 	bf.write(baseType);
 	bf.specialize writeAllIO<TTypeValueKind.TCase>(cases);
 end;
@@ -676,7 +663,6 @@ constructor TTypeTaggedKind.create(
 	defaultInit_, instanceDeinit_: TMethod;
 	parents_: TTypeIndexArray;
 	
-	isFlags_: boolean;
 	cases_: TTypeTaggedKind.TCaseArray);
 begin
 	inherited create(
@@ -685,7 +671,6 @@ begin
 		instanceMembers_, instanceSelectors_, instanceMethods_, defaultInit_, instanceDeinit_, parents_
 	);
 
-	isFlags := isFlags_;
 	cases := cases_;
 end;
 
@@ -705,8 +690,40 @@ begin
 
 	inherited writeToBinary(bf);
 	
-	bf.write(isFlags);
 	bf.specialize writeAllIO<TTypeTaggedKind.TCase>(cases);
+end;
+
+
+constructor TTypeNative.create(
+	index_: TTypeIndex;
+	name_: shortstring;
+	attrs_: TTypeAttrs;
+	typeParams_: TTypeIndexArray;
+
+	staticMembers_: TMemberArray;
+	staticSelectors_: TSelectorArray;
+	staticMethods_: TMethodArray;
+	
+	instanceMembers_: TMemberArray;
+	instanceSelectors_: TSelectorArray;
+	instanceMethods_: TMethodArray;
+	
+	repr_: TNativeRepr);
+begin
+	inherited create(
+		index_, name_, attrs_, typeParams_,
+		[], nil, nil, staticMembers_, staticSelectors_, staticMethods_,
+		instanceMembers_, instanceSelectors_, instanceMethods_
+	);
+
+	repr := repr_;
+end;
+
+procedure TTypeNative.writeToBinary(const bf: TBinaryFile);
+begin
+	bf.specialize write<TTypeID>(TTypeID.native);
+
+	inherited writeToBinary(bf);
 end;
 
 end.
