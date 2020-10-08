@@ -265,8 +265,6 @@ end;
 
 procedure writeOp(const bf: TBinaryFile; const op: TOp);
 begin
-	//{$T+}writeln(hexStr(@op));
-	writeln(integer(op.opcode));
 	if op.opcode in [TOpcode.consecutive, TOpcode.pushSec_table, TOpcode.pushTrapN] then begin
 		bf.specialize write<TOpcode>(op.opcode);
 
