@@ -1,6 +1,7 @@
 program star_vm_test;
 
 uses
+	SysUtils,
 	StringUtils,
 	FileUtils,
 	Star,
@@ -8,29 +9,66 @@ uses
 	StarBytecodeCodeSection,
 	StarBytecodeOp,
 	StarBytecodeOpcode,
-	StarBytecodeMember;
-
-type
-	TBuf = array[0..sizeof(TOp)] of byte;
-	PBuf = ^TBuf;
+	StarBytecodeMember,
+	StarBytecodeMethod,
+	StarBytecodeBuilder,
+	StarBytecodeType;
 
 var
-	op: TOp;
-	s: string;
-	b: byte;
+	bf: TBinaryFile;
+	main: TTypeModule;
+	method: TMethod;
+	builder: TMethodBuilder;
 
 begin
-	with op do begin
-		opcode := TOpcode.pushConst;
-		pushConst := 5;
+	{-----------------------------------------------}
+
+	writeln('module Main is main {');
+
+	method := TMethod.create(
+		0,
+		[TMethodAttr.static, TMethodAttr.main],
+		[],
+		[],
+		1,
+		[],
+		[]
+	);
+
+	main := TTypeModule.create(
+		3,
+		'Main',
+		[TTypeAttr.main],
+		[],
+		[],
+		nil,
+		nil,
+		[],
+		['main'],
+		[method]
+	);
+
+	builder := TMethodBuilder.create(method);
+	
+	with builder do begin
+		pushConst(1);
+		pushConst(2);
+		add();
+		inspectStack();
+		retVoid();
 	end;
-	
-	for b in PBuf(@op)^ do writeln(b);
-	
-	writeln(sizeof(op):10, sizeof(TOp):10);
-	writeln(op.opcode, ' ', op.pushConst);
-	s := '';
-	str(op.opcode, s);
-	writeln(s);
-	writeln(dumpOp(op));
+
+	writeln(method.dump());
+
+	builder.destroy();
+
+	writeln('}');
+
+	bf := TBinaryFile.create('out.starbm'{, fmOpenWrite});
+	bf.specialize writeIO<TTypeModule>(main);
+	bf.close();
+	bf.destroy();
+
+	//method.destroy();
+	main.destroy();
 end.
