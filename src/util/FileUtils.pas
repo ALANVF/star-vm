@@ -34,7 +34,6 @@ unit FileUtils;
 
 {$define M_FOR_ALL_WRITE_TYPES :=
 	M_FOR_ALL_TYPES
-	M_BEGIN IBinaryIOWrite M_END
 	M_BEGIN ansistring     M_END
 	M_BEGIN widestring     M_END
 }
@@ -68,6 +67,7 @@ type
 	TBinaryFile = class
 	private
 		isClosed: boolean;
+		
 	public
 		handle: THandle;
 
@@ -109,13 +109,14 @@ type
 
 		function truncate(size: int64): boolean;
 
-		procedure write(const buffer: IBinaryIOWrite); overload;
 		procedure write(const buffer: ansistring); overload;
 		procedure write(const buffer: widestring); overload;
 		{$define M_BEGIN :=  procedure write(buffer:  }
 		{$define M_END   :=  ); overload;             }
 			M_FOR_ALL_TYPES
 		generic procedure write<T>(const buffer: T); overload;
+
+		generic procedure writeIO<T: IBinaryIOWrite>(const buffer: T);
 
 		procedure writeOnly(const buffer; count: longint);
 
@@ -125,6 +126,8 @@ type
 		generic procedure writeAll<T>(const buffer: specialize TArray<T>); overload;
 		//generic procedure writeAll<T>(const buffer: specialize TArray<T>; size: longint); overload;
 		generic procedure writeAll<T>(const buffer: specialize TArray<T>; const proc: specialize TBinaryCustomWriteProc<T>); overload;
+
+		generic procedure writeAllIO<T: IBinaryIOWrite>(const buffer: specialize TArray<T>);
 	end;
 
 implementation
@@ -260,7 +263,7 @@ end;
 		fileRead(handle, len, sizeof(len));
 		setLength(buffer, len);
 		
-		for i := 0 to len do
+		for i := low(buffer) to high(buffer) do
 			self.read(buffer[i]);
 	end;
 }
@@ -278,7 +281,7 @@ begin
 	fileRead(handle, len, sizeof(len));
 	setLength(_buffer, len);
 	
-	for i := 0 to len do
+	for i := low(buffer) to high(_buffer) do
 		self.specialize read<T>(_buffer[i]);
 
 	buffer := _buffer;
@@ -293,7 +296,7 @@ begin
 	fileRead(handle, len, sizeof(len));
 	setLength(buffer, len);
 	
-	for i := 0 to len do
+	for i := low(buffer) to high(buffer) do
 		self.readOnly(buffer[i], size);
 end;}
 
@@ -306,7 +309,7 @@ begin
 	fileRead(handle, len, sizeof(len));
 	setLength(buffer, len);
 	
-	for i := 0 to len do
+	for i := low(buffer) to high(buffer) do
 		buffer[i] := func(self);
 end;
 
@@ -328,28 +331,26 @@ begin
 end;
 
 
-procedure TBinaryFile.write(const buffer: IBinaryIOWrite); overload;
-begin
-	assert(buffer <> nil);
-	buffer.writeToBinary(self);
-end;
-
 procedure TBinaryFile.write(const buffer: ansistring); overload;
 var
 	len: longint;
+	c: ansichar;
 begin
 	len := length(buffer);
 	fileWrite(handle, len, sizeof(len));
-	fileWrite(handle, buffer, len * sizeof(ansichar));
+	//fileWrite(handle, buffer, len * sizeof(ansichar));
+	for c in buffer do fileWrite(handle, c, sizeof(c));
 end;
 
 procedure TBinaryFile.write(const buffer: widestring); overload;
 var
 	len: longint;
+	c: widechar;
 begin
 	len := length(buffer);
 	fileWrite(handle, len, sizeof(len));
-	fileWrite(handle, buffer, len * sizeof(widechar));
+	//fileWrite(handle, buffer, len * sizeof(widechar));
+	for c in buffer do fileWrite(handle, c, sizeof(c));
 end;
 
 {$define M_BEGIN :=  procedure TBinaryFile.write(buffer:                                 }
@@ -359,6 +360,12 @@ end;
 generic procedure TBinaryFile.write<T>(const buffer: T); overload;
 begin
 	fileWrite(handle, buffer, sizeof(buffer));
+end;
+
+
+generic procedure TBinaryFile.writeIO<T>(const buffer: T);
+begin
+	buffer.writeToBinary(self);
 end;
 
 
@@ -378,7 +385,7 @@ end;
 		len := length(buffer);
 		fileWrite(handle, len, sizeof(len));
 		
-		for i := 0 to len do
+		for i := low(buffer) to high(buffer) do
 			self.write(buffer[i]);
 	end;
 }
@@ -391,7 +398,7 @@ begin
 	len := length(buffer);
 	fileWrite(handle, len, sizeof(len));
 	
-	for i := 0 to len do
+	for i := low(buffer) to high(buffer) do
 		self.specialize write<T>(buffer[i]);
 end;
 
@@ -402,7 +409,7 @@ begin
 	len := length(buffer);
 	fileWrite(handle, len, sizeof(len));
 	
-	for i := 0 to len do
+	for i := 0 to high(buffer) do
 		self.write(buffer[i], size);
 end;}
 
@@ -413,8 +420,20 @@ begin
 	len := length(buffer);
 	fileWrite(handle, len, sizeof(len));
 	
-	for i := 0 to len do
+	for i := low(buffer) to high(buffer) do
 		proc(self, buffer[i]);
+end;
+
+
+generic procedure TBinaryFile.writeAllIO<T>(const buffer: specialize TArray<T>);
+var
+	i, len: longint;
+begin
+	len := length(buffer);
+	fileWrite(handle, len, sizeof(len));
+	
+	for i := low(buffer) to high(buffer) do
+		buffer[i].writeToBinary(self);
 end;
 
 end.

@@ -2,6 +2,7 @@ unit StarBytecodeOp;
 
 {$scopedEnums+}
 {$minEnumSize 1}
+{$T+}
 { $modeSwitch ADVANCEDRECORDS}
 
 interface
@@ -20,7 +21,7 @@ type
 		none
 	);
 
-	TTrapCase = record
+	TTrapCase = packed record
 		destReg: TRegisterIndex;
 		section: TCodeSectionIndex;
 	end;
@@ -50,12 +51,12 @@ type
 			
 			TOpcode.pushMember, TOpcode.setMember: (member: TMemberIndex);
 			
-			TOpcode.pushStaticMember, TOpcode.setStaticMember: (staticMember: record
+			TOpcode.pushStaticMember, TOpcode.setStaticMember: (staticMember: packed record
 				&type: TTypeIndex;
 				member: TMemberIndex;
 			end);
 			
-			TOpcode.swapReg: (swapReg: record
+			TOpcode.swapReg: (swapReg: packed record
 				reg1, reg2: TRegisterIndex;
 			end);
 			
@@ -63,7 +64,7 @@ type
 			
 			TOpcode.incr, TOpcode.decr: (step: TRegisterIndex);
 			
-			TOpcode.consecutive: (consecutive: record
+			TOpcode.consecutive: (consecutive: packed record
 				kind: TConsecutiveKind;
 				sections: PCodeSectionIndexArray;
 			end);
@@ -72,7 +73,7 @@ type
 			TOpcode.popSecAndChange,
 			TOpcode.changeSec, TOpcode.changeSec_if: (sec: TCodeSectionIndex);
 
-			TOpcode.pushSec_either, TOpcode.changeSec_either: (sec_either: record
+			TOpcode.pushSec_either, TOpcode.changeSec_either: (sec_either: packed record
 				trueSection, falseSection: TCodeSectionIndex;
 			end);
 			
@@ -80,23 +81,23 @@ type
 			
 			TOpcode.popNSec: (popNSec: word);
 			
-			TOpcode.popNSecAndChange: (popNSecAndChange: record
+			TOpcode.popNSecAndChange: (popNSecAndChange: packed record
 				depth: word;
 				section: TCodeSectionIndex;
 			end);
 			
-			TOpcode.pushTrap: (pushTrap: record
+			TOpcode.pushTrap: (pushTrap: packed record
 				trySection: TCodeSectionIndex;
 				catchDest: TRegisterIndex;
 				catchSection: TCodeSectionIndex;
 			end);
 
-			TOpcode.pushTrapN: (pushTrapN: record
+			TOpcode.pushTrapN: (pushTrapN: packed record
 				trySection: TCodeSectionIndex;
 				cases: PTrapCases;
 			end);
 			
-			TOpcode.staticSend: (staticSend: record
+			TOpcode.staticSend: (staticSend: packed record
 				&type: TTypeIndex;
 				selector: TSelectorIndex;
 			end);
@@ -107,7 +108,7 @@ type
 
 			TOpcode.getKindSlot: (getKindSlot: byte);
 			
-			TOpcode.debug: (debug: record
+			TOpcode.debug: (debug: packed record
 				case kind: TDebugKind of
 					TDebugKind.inspectEverything..TDebugKind.inspectCodeSectionStack: ();
 					TDebugKind.inspectReg: (r: TRegisterIndex);
@@ -127,6 +128,8 @@ procedure disposeOp(var op: TOp);
 procedure writeOp(const bf: TBinaryFile; const op: TOp);
 
 function readOp(handle: THandle): TOp;
+
+function sizeOfOp(const op: TOp): word;
 
 implementation
 
@@ -262,7 +265,9 @@ end;
 
 procedure writeOp(const bf: TBinaryFile; const op: TOp);
 begin
-	if op.opcode in [TOpcode.consecutive, TOpcode.pushSec_table] then begin
+	//{$T+}writeln(hexStr(@op));
+	writeln(integer(op.opcode));
+	if op.opcode in [TOpcode.consecutive, TOpcode.pushSec_table, TOpcode.pushTrapN] then begin
 		bf.specialize write<TOpcode>(op.opcode);
 
 		case op.opcode of
@@ -282,7 +287,8 @@ begin
 			end;
 		end;
 	end else
-		bf.specialize write<TOp>(op);
+		bf.writeOnly(op, sizeOfOp(op));
+		//bf.specialize write<TOp>(op);
 end;
 
 function readOp(handle: THandle): TOp;
@@ -323,9 +329,65 @@ begin
 			end;
 		end;
 	end else
-		{$T+}
 		// Well that seems kinda unsafe
 		fileRead(handle, (@result + sizeof(TOpcode))^, sizeof(result) - sizeof(TOpcode));
+end;
+
+function sizeOfOp(const op: TOp): word;
+begin
+	result := sizeof(TOpcode);
+
+	with op do
+		case opcode of
+			TOpcode.pushConst: result += sizeof(pushConst);
+			
+			TOpcode.pushReg, TOpcode.setReg: result += sizeof(reg);
+			
+			TOpcode.pushMember, TOpcode.setMember: result += sizeof(member);
+			
+			TOpcode.pushStaticMember, TOpcode.setStaticMember: result += sizeof(staticMember);
+
+			TOpcode.swapReg: result += sizeof(swapReg);
+			
+			TOpcode.popN: result += sizeof(popN);
+			
+			TOpcode.incr, TOpcode.decr: result += sizeof(step);
+			
+			TOpcode.consecutive: result += sizeof(consecutive);
+			
+			TOpcode.pushSec, TOpcode.pushSec_if,
+			TOpcode.popSecAndChange,
+			TOpcode.changeSec, TOpcode.changeSec_if: result += sizeof(sec);
+
+			TOpcode.pushSec_either, TOpcode.changeSec_either: result += sizeof(sec_either);
+			
+			TOpcode.pushSec_table: result += sizeof(pushSec_table);
+			
+			TOpcode.popNSec: result += sizeof(popNSec);
+			
+			TOpcode.popNSecAndChange: result += sizeof(popNSecAndChange);
+			
+			TOpcode.pushTrap: result += sizeof(pushTrap);
+
+			TOpcode.pushTrapN: result += sizeof(pushTrapN);
+			
+			TOpcode.staticSend: result += sizeof(staticSend);
+			
+			TOpcode.objSend: result += sizeof(objSend);
+
+			TOpcode.cast, TOpcode.isa: result += sizeof(&type);
+
+			TOpcode.getKindSlot: result += sizeof(getKindSlot);
+
+			TOpcode.debug: with debug do begin
+				result += sizeof(kind);
+				case kind of
+					TDebugKind.inspectReg: result += sizeof(r);
+					TDebugKind.inspectConst: result += sizeof(c);
+					TDebugKind.inspectType: result += sizeof(t);
+				end;
+			end;
+		end;
 end;
 
 end.

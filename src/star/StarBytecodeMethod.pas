@@ -94,7 +94,7 @@ begin
 	bf.writeAll(paramTypes);
 	bf.write(returnType);
 	bf.writeAll(registers);
-	bf.writeAll(IBinaryIOWriteArray(sections));
+	bf.specialize writeAllIO<TCodeSection>(sections);
 end;
 
 

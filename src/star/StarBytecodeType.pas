@@ -2,6 +2,7 @@ unit StarBytecodeType;
 
 {$SCOPEDENUMS+}
 {$MINENUMSIZE 1}
+{$T+}
 
 interface
 
@@ -370,15 +371,17 @@ begin
 	
 	hasStaticInit := staticInit <> nil;
 	bf.write(hasStaticInit);
-	if hasStaticInit then bf.write(staticInit);
+	if hasStaticInit then
+		bf.specialize writeIO<TMethod>(staticInit);
 
 	hasStaticDeinit := staticDeinit <> nil;
 	bf.write(hasStaticDeinit);
-	if hasStaticDeinit then bf.write(staticDeinit);
-
-	bf.writeAll(IBinaryIOWriteArray(staticMembers));
-	bf.writeAll(IBinaryIOWriteArray(staticSelectors));
-	bf.writeAll(IBinaryIOWriteArray(staticMethods));
+	if hasStaticDeinit then
+		bf.specialize writeIO<TMethod>(staticDeinit);
+	
+	bf.specialize writeAllIO<TMember>(staticMembers);
+	bf.writeAll(staticSelectors);
+	bf.specialize writeAllIO<TMethod>(staticMethods);
 end;
 
 
@@ -429,9 +432,9 @@ procedure TTypeDispatchable.writeToBinary(const bf: TBinaryFile);
 begin
 	inherited writeToBinary(bf);
 	
-	bf.writeAll(IBinaryIOWriteArray(instanceMembers));
-	bf.writeAll(IBinaryIOWriteArray(instanceSelectors));
-	bf.writeAll(IBinaryIOWriteArray(instanceMethods));
+	bf.specialize writeAllIO<TMember>(instanceMembers);
+	bf.writeAll(instanceSelectors);
+	bf.specialize writeAllIO<TMethod>(instanceMethods);
 end;
 
 
@@ -479,11 +482,13 @@ begin
 
 	hasDefaultInit := defaultInit <> nil;
 	bf.write(hasDefaultInit);
-	if hasDefaultInit then bf.write(defaultInit);
+	if hasDefaultInit then
+		bf.specialize writeIO<TMethod>(defaultInit);
 
 	hasInstanceDeinit := instanceDeinit <> nil;
 	bf.write(hasInstanceDeinit);
-	if hasInstanceDeinit then bf.write(instanceDeinit);
+	if hasInstanceDeinit then
+		bf.specialize writeIO<TMethod>(instanceDeinit);
 end;
 
 
@@ -533,7 +538,7 @@ begin
 	inherited writeToBinary(bf);
 
 	bf.writeAll(initSelectors);
-	bf.writeAll(IBinaryIOWriteArray(initMethods));
+	bf.specialize writeAllIO<TMethod>(initMethods);
 end;
 
 
@@ -566,7 +571,8 @@ begin
 	
 	hasDefaultInit := defaultInit <> nil;
 	bf.write(hasDefaultInit);
-	if hasDefaultInit then bf.write(defaultInit);
+	if hasDefaultInit then
+		bf.specialize writeIO<TMethod>(defaultInit);
 end;
 
 
@@ -620,7 +626,7 @@ begin
 	
 	bf.write(isFlags);
 	bf.write(baseType);
-	bf.writeAll(IBinaryIOWriteArray(cases));
+	bf.specialize writeAllIO<TTypeValueKind.TCase>(cases);
 end;
 
 
@@ -648,7 +654,8 @@ begin
 
 	hasDefaultInit := defaultInit <> nil;
 	bf.write(hasDefaultInit);
-	if hasDefaultInit then bf.write(defaultInit);
+	if hasDefaultInit then
+		bf.specialize writeIO<TMethod>(defaultInit);
 end;
 
 
@@ -699,7 +706,7 @@ begin
 	inherited writeToBinary(bf);
 	
 	bf.write(isFlags);
-	bf.writeAll(IBinaryIOWriteArray(cases));
+	bf.specialize writeAllIO<TTypeTaggedKind.TCase>(cases);
 end;
 
 end.
