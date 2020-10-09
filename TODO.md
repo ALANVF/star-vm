@@ -1,0 +1,3 @@
+- rewrite binary input routines
+- clean up code
+- many more things...
