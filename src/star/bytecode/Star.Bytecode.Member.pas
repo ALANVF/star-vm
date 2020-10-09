@@ -1,4 +1,4 @@
-unit StarBytecodeMember;
+unit Star.Bytecode.Member;
 
 {$SCOPEDENUMS+}
 {$MINENUMSIZE 1}
@@ -6,7 +6,7 @@ unit StarBytecodeMember;
 interface
 
 uses
-	StarBytecodeIndex,
+	Star.Bytecode.Index,
 	SysUtils,
 	FileUtils;
 

@@ -1,4 +1,4 @@
-unit StarBytecodeNativeRepr;
+unit Star.Bytecode.NativeRepr;
 
 interface
 

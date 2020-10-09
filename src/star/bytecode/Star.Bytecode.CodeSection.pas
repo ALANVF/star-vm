@@ -1,10 +1,10 @@
-unit StarBytecodeCodeSection;
+unit Star.Bytecode.CodeSection;
 
 interface
 
 uses
-	StarBytecodeIndex,
-	StarBytecodeOp,
+	Star.Bytecode.Index,
+	Star.Bytecode.Op,
 	SysUtils,
 	FileUtils;
 

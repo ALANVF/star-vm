@@ -3,7 +3,7 @@ unit Star;
 interface
 
 uses
-	StarBytecode;
+	Star.Bytecode;
 
 implementation
 

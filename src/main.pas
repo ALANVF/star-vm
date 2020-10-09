@@ -5,14 +5,14 @@ uses
 	StringUtils,
 	FileUtils,
 	Star,
-	StarBytecode,
-	StarBytecodeCodeSection,
-	StarBytecodeOp,
-	StarBytecodeOpcode,
-	StarBytecodeMember,
-	StarBytecodeMethod,
-	StarBytecodeBuilder,
-	StarBytecodeType;
+	Star.Bytecode,
+	Star.Bytecode.CodeSection,
+	Star.Bytecode.Op,
+	Star.Bytecode.Opcode,
+	Star.Bytecode.Member,
+	Star.Bytecode.Method,
+	Star.Bytecode.Builder,
+	Star.Bytecode.&Type;
 
 var
 	bf: TBinaryFile;
@@ -64,7 +64,7 @@ begin
 
 	writeln('}');
 
-	bf := TBinaryFile.create('out.starbm'{, fmOpenWrite});
+	bf := TBinaryFile.create('out.blh');
 	bf.specialize writeIO<TTypeModule>(main);
 	bf.close();
 	bf.destroy();

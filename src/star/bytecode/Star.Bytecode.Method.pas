@@ -1,4 +1,4 @@
-unit StarBytecodeMethod;
+unit Star.Bytecode.Method;
 
 {$SCOPEDENUMS+}
 {$MINENUMSIZE 1}
@@ -6,10 +6,10 @@ unit StarBytecodeMethod;
 interface
 
 uses
-	StarBytecodeIndex,
-	StarBytecodeOp,
-	StarBytecodeSelector,
-	StarBytecodeCodeSection,
+	Star.Bytecode.Index,
+	Star.Bytecode.Op,
+	Star.Bytecode.Selector,
+	Star.Bytecode.CodeSection,
 	SysUtils,
 	FileUtils;
 

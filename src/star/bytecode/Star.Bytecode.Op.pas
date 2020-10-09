@@ -1,4 +1,4 @@
-unit StarBytecodeOp;
+unit Star.Bytecode.Op;
 
 {$scopedEnums+}
 {$minEnumSize 1}
@@ -8,8 +8,8 @@ unit StarBytecodeOp;
 interface
 
 uses
-	StarBytecodeIndex,
-	StarBytecodeOpcode,
+	Star.Bytecode.Index,
+	Star.Bytecode.Opcode,
 	SysUtils,
 	FileUtils;
 

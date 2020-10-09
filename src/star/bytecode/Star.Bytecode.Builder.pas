@@ -1,4 +1,4 @@
-unit StarBytecodeBuilder;
+unit Star.Bytecode.Builder;
 
 {$modeSwitch ARRAYOPERATORS}
 {$modeSwitch ADVANCEDRECORDS}
@@ -6,14 +6,14 @@ unit StarBytecodeBuilder;
 interface
 
 uses
-	StarBytecodeIndex,
-	StarBytecodeOpcode,
-	StarBytecodeOp,
-	StarBytecodeSelector,
-	StarBytecodeMember,
-	StarBytecodeCodeSection,
-	StarBytecodeMethod,
-	StarBytecodeType;
+	Star.Bytecode.Index,
+	Star.Bytecode.Opcode,
+	Star.Bytecode.Op,
+	Star.Bytecode.Selector,
+	Star.Bytecode.Member,
+	Star.Bytecode.CodeSection,
+	Star.Bytecode.Method,
+	Star.Bytecode.&Type;
 
 type
 	TMethodBuilder = class;

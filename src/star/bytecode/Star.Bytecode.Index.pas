@@ -1,4 +1,4 @@
-unit StarBytecodeIndex;
+unit Star.Bytecode.Index;
 
 interface
 

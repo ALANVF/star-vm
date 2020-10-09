@@ -1,9 +1,9 @@
-unit StarBytecodeSelector;
+unit Star.Bytecode.Selector;
 
 interface
 
 uses
-	StarBytecodeIndex,
+	Star.Bytecode.Index,
 	SysUtils;
 
 type

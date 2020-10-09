@@ -1,4 +1,4 @@
-unit StarBytecodeOpcode;
+unit Star.Bytecode.Opcode;
 
 {$scopedEnums+}
 {$minEnumSize 1}
