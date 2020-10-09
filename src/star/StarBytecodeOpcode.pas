@@ -1,7 +1,7 @@
 unit StarBytecodeOpcode;
 
-{$SCOPEDENUMS+}
-{$MINENUMSIZE 1}
+{$scopedEnums+}
+{$minEnumSize 1}
 
 interface
 
@@ -9,6 +9,8 @@ type
 	{TODO:
 	- lazy jumptable op
 	- select op
+	- remove changeSec_if op
+	- maybe remove pushTrap op
 	}
 	TOpcode = (
 		retain,                { ... }
@@ -57,32 +59,32 @@ type
 		incr,                  { dest++ }
 		decr,                  { dest-- }
 
-		consecutive,           { dest = value1 <op> value2 <op> value3 <op> ... valueN  WHERE  op = && OR || OR ^^ }
-		give,                  { ... }                                                                               // consecutive CHOICE TERMINATOR
+		consecutive,           { dest = value1 <op> value2 <op> value3 <op> ... valueN  WHERE  op = && OR || OR ^^ OR !! }
+		give,                  { ... }                                                                                     // consecutive CHOICE TERMINATOR
 
 		pushSec,               { ... }
 		pushSec_if,            { if cond ... }
 		pushSec_either,        { if cond ... else ... }
 		pushSec_table,         { match ... at ... else ... }
 		
-		changeSec,             { ... }                                                                               // SECTION TERMINATOR
-		changeSec_if,          { ... }                                                                               // SECTION TERMINATOR
-		changeSec_either,      { ... }                                                                               // SECTION TERMINATOR
+		changeSec,             { ... }                                                                                     // SECTION TERMINATOR
+		changeSec_if,          { ... }                                                                                     // SECTION TERMINATOR
+		changeSec_either,      { ... }                                                                                     // SECTION TERMINATOR
 		
-		popSec,                { ... }                                                                               // SECTION TERMINATOR
-		popNSec,               { ... }                                                                               // MULTI-SECTION TERMINATOR
-		popSecAndChange,       { ... }                                                                               // MULTI-SECTION TERMINATOR
-		popNSecAndChange,      { ... }                                                                               // MULTI-SECTION TERMINATOR
+		popSec,                { ... }                                                                                     // SECTION TERMINATOR
+		popNSec,               { ... }                                                                                     // MULTI-SECTION TERMINATOR
+		popSecAndChange,       { ... }                                                                                     // MULTI-SECTION TERMINATOR
+		popNSecAndChange,      { ... }                                                                                     // MULTI-SECTION TERMINATOR
 		
-		unreachable,           { ... }                                                                               // GLOBAL TERMINATOR
+		unreachable,           { ... }                                                                                     // GLOBAL TERMINATOR
 
-		ret,                   { return value }                                                                      // METHOD TERMINATOR
-		retVoid,               { return }                                                                            // METHOD TERMINATOR
+		ret,                   { return value }                                                                            // METHOD TERMINATOR
+		retVoid,               { return }                                                                                  // METHOD TERMINATOR
 
 		pushTrap,              { try ... catch ... }
 		pushTrapN,             { try ... catch ... catch ... }
-		popTrap,               { ... }                                                                               // TRAP TERMINATOR
-		panic,                 { panic value }                                                                       // MULTI-SECTION TERMINATOR
+		popTrap,               { ... }                                                                                     // TRAP TERMINATOR
+		panic,                 { panic value }                                                                             // MULTI-SECTION TERMINATOR
 
 		staticSend,            { dest = Type[msg...] }
 		objSend,               { dest = value[msg...] }
@@ -104,41 +106,10 @@ implementation
 function dumpOpcodeName(opcode: TOpcode): string;
 begin
 	case opcode of
-		TOpcode.retain: result := 'retain';
-		TOpcode.release: result := 'release';
 		TOpcode.pushConst..TOpcode.pushStaticMember: result := 'push';
 		TOpcode.setReg..TOpcode.setStaticMember: result := 'set';
 		TOpcode.swapReg: result := 'swap_reg';
-		TOpcode.pop, TOpcode.popN: result := 'pop';
-		TOpcode.clear: result := 'clear';
-		TOpcode.swap: result := 'swap';
-		TOpcode.add: result := 'add';
-		TOpcode.sub: result := 'sub';
-		TOpcode.mult: result := 'mult';
-		TOpcode.pow: result := 'pow';
-		TOpcode.&div: result := 'div';
-		TOpcode.idiv: result := 'idiv';
-		TOpcode.&mod: result := 'mod';
-		TOpcode.mod0: result := 'mod0';
-		TOpcode.&and: result := 'and';
-		TOpcode.&or: result := 'or';
-		TOpcode.&xor: result := 'xor';
-		TOpcode.&shl: result := 'shl';
-		TOpcode.&shr: result := 'shr';
-		TOpcode.eq: result := 'eq';
-		TOpcode.ne: result := 'ne';
-		TOpcode.gt: result := 'gt';
-		TOpcode.ge: result := 'ge';
-		TOpcode.lt: result := 'lt';
-		TOpcode.le: result := 'le';
-		TOpcode.neg: result := 'neg';
-		TOpcode.&not: result := 'not';
-		TOpcode.compl: result := 'compl';
-		TOpcode.truthy: result := 'truthy';
-		TOpcode.incr: result := 'incr';
-		TOpcode.decr: result := 'decr';
-		TOpcode.consecutive: result := 'consecutive';
-		TOpcode.give: result := 'give';
+		TOpcode.popN: result := 'pop';
 		TOpcode.pushSec: result := 'sec';
 		TOpcode.pushSec_if: result := 'sec_if';
 		TOpcode.pushSec_either: result := 'sec_either';
@@ -148,21 +119,16 @@ begin
 		TOpcode.changeSec_either: result := 'csec_either';
 		TOpcode.popSec, TOpcode.popNSec: result := 'psec';
 		TOpcode.popSecAndChange, TOpcode.popNSecAndChange: result := 'pcsec';
-		TOpcode.unreachable: result := 'unreachable';
 		TOpcode.ret: result := 'return';
 		TOpcode.retVoid: result := 'return void';
 		TOpcode.pushTrap, TOpcode.pushTrapN: result := 'trap';
 		TOpcode.popTrap: result := 'ptrap';
-		TOpcode.panic: result := 'panic';
 		TOpcode.staticSend, TOpcode.objSend: result := 'send';
-		TOpcode.cast: result := 'cast';
-		TOpcode.isa: result := 'isa';
 		TOpcode.getKindID: result := 'kind_id';
 		TOpcode.getKindSlot: result := 'kind_slot';
 		TOpcode.getKindValue: result := 'kind_value';
-		TOpcode.debug: result := 'debug';
 	else
-		result := '???';
+		str(opcode, result);
 	end;
 end;
 
