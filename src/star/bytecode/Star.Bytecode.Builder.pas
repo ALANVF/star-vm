@@ -344,7 +344,7 @@ end;
 
 procedure TMethodBuilder.insertOp(const op: TOp);
 begin
-	insert([op], method.sections[secIndex].ops, opIndex);
+	insert({source}op, {target}method.sections[secIndex].ops, {index}opIndex);
 	inc(opIndex);
 end;
 
