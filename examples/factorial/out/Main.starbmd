@@ -39,7 +39,7 @@ module Main is main {
 		}
 	}
 	
-	on #2 [] is main is static {
+	on #2 [] (%1) is main is static {
 
 		@0 {
 			push &3
