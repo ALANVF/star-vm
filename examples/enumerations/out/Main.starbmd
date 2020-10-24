@@ -1,0 +1,17 @@
+%1 = use Star.Core.Void
+%2 = use Star.Core
+%3 = use Fruit
+
+#1 = main
+#2 = banana
+#3 = say:
+
+module Main is main {
+	on #1 [] (%1) is main is static {
+		@0 {
+			send %3, #2
+			send %2, #3
+			return void
+		}
+	}
+}
