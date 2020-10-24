@@ -330,6 +330,15 @@ sec_table @<sec-1>, ...
 Switch case thing.
 
 
+### sec_ltable
+```
+sec_ltable @<case-1> sec @<dest-1>, ...
+sec_ltable @<case-1> sec @<dest-1>, ..., else sec @<default-dest>
+```
+
+Switch case thing.
+
+
 ### csec
 ```
 csec @<sec>
