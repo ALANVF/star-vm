@@ -7,9 +7,8 @@ interface
 
 type
 	{TODO:
-	- lazy jumptable op
 	- select op
-	- remove changeSec_if op
+	- maybe remove changeSec_if op
 	- maybe remove pushTrap op
 	}
 	TOpcode = (
@@ -66,6 +65,7 @@ type
 		pushSec_if,            { if cond ... }
 		pushSec_either,        { if cond ... else ... }
 		pushSec_table,         { match ... at ... else ... }
+		pushSec_lazyTable,     { match ... at ... else ... }
 		
 		changeSec,             { ... }                                                                                     // SECTION TERMINATOR
 		changeSec_if,          { ... }                                                                                     // SECTION TERMINATOR
@@ -114,6 +114,7 @@ begin
 		TOpcode.pushSec_if: result := 'sec_if';
 		TOpcode.pushSec_either: result := 'sec_either';
 		TOpcode.pushSec_table: result := 'sec_table';
+		TOpcode.pushSec_lazyTable: result := 'sec_ltable';
 		TOpcode.changeSec: result := 'csec';
 		TOpcode.changeSec_if: result := 'csec_if';
 		TOpcode.changeSec_either: result := 'csec_either';

@@ -78,6 +78,13 @@ type
 			end);
 			
 			TOpcode.pushSec_table: (pushSec_table: PCodeSectionIndexArray);
+
+			TOpcode.pushSec_lazyTable: (pushSec_lazyTable: packed record
+				cases, sections: PCodeSectionIndexArray;
+				case hasElseSection: boolean of
+					true: (elseSection: TCodeSectionIndex);
+					false: ();
+			end);
 			
 			TOpcode.popNSec: (popNSec: word);
 			
@@ -199,6 +206,10 @@ begin
 					result += ', ' + dumpCodeSectionIndex(pushSec_table^[i]);
 			end;
 
+			TOpcode.pushSec_lazyTable: begin {TODO}
+				result += 'TODO';
+			end;
+
 			TOpcode.popNSec: result += intToStr(popNSec);
 			
 			TOpcode.popNSecAndChange: with popNSecAndChange do begin
@@ -259,6 +270,10 @@ begin
 		case opcode of
 			TOpcode.consecutive: freeMemAndNil(consecutive.sections);
 			TOpcode.pushSec_table: freeMemAndNil(pushSec_table);
+			TOpcode.pushSec_lazyTable: with pushSec_lazyTable do begin
+				freeMemAndNil(cases);
+				freeMemAndNil(sections);
+			end;
 			TOpcode.pushTrapN: freeMemAndNil(pushTrapN.cases);
 		end;
 end;
@@ -277,6 +292,10 @@ begin
 
 			TOpcode.pushSec_table: with op do
 				bf.writeAll(pushSec_table^);
+			
+			TOpcode.pushSec_lazyTable: with op.pushSec_lazyTable do begin
+				{TODO}
+			end;
 			
 			TOpcode.pushTrapN: with op.pushTrapN do begin
 				bf.write(trySection);
@@ -314,6 +333,10 @@ begin
 				setLength(pushSec_table^, len);
 				for i := 0 to len-1 do
 					fileRead(handle, pushSec_table^[i], sizeof(TCodeSectionIndex));
+			end;
+
+			TOpcode.pushSec_lazyTable: with pushSec_lazyTable do begin
+				{TODO}
 			end;
 
 			TOpcode.pushTrapN: with pushTrapN do begin
@@ -360,6 +383,8 @@ begin
 			TOpcode.pushSec_either, TOpcode.changeSec_either: result += sizeof(sec_either);
 			
 			TOpcode.pushSec_table: result += sizeof(pushSec_table);
+
+			pushSec_lazyTable: result += sizeof(pushSec_lazyTable);
 			
 			TOpcode.popNSec: result += sizeof(popNSec);
 			

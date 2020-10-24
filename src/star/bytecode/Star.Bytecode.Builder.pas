@@ -145,6 +145,9 @@ type
 		procedure pushSec_either(trueSec, falseSec: TCodeSectionIndex);
 		
 		procedure pushSec_table(sections: TCodeSectionIndexArray);
+
+		{TODO}
+		//procedure pushSec_lazyTable
 		
 		procedure changeSec(sec: TCodeSectionIndex);
 		
