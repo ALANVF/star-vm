@@ -1,0 +1,62 @@
+%1 = use Star.Core.Int
+%2 = use Star.Core.Str
+%3 = use Point
+
+&1 = Int 0
+&2 = Str "Circle x: "
+&3 = Str ", y: "
+&4 = Str ", radius: "
+
+#1 = r
+#2 = r:
+#3 = x: y: r:
+
+class Circle of %3 {
+	my .3 (%1) is getter #1 is setter #2
+
+	init {
+		@0 {
+			push $0
+			push &1
+			set .3
+			return void
+		}
+	}
+
+	init #3 [$1 (%1), $2 (%1), $3 (%1)] is memberwise {
+		@0 {
+			push $0
+			pin
+			push $1
+			set .1
+			push $2
+			set .2
+			push $3
+			set .3
+			return void
+		}
+	}
+
+	cast %2 {
+		@0 {
+			push &2
+			push $0
+			push .1
+			cast %2
+			add
+			push &3
+			add
+			push $0
+			push .2
+			cast %2
+			add
+			push &4
+			add
+			push $0
+			push .3
+			cast %2
+			add
+			return
+		}
+	}
+}

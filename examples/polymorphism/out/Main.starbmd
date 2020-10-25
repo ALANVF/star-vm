@@ -1,0 +1,27 @@
+%1 = use Star.Core.Void
+%2 = use Star.Core
+%3 = use Point
+%4 = use Circle
+
+#1 = main
+#2 = new
+#3 = say:
+
+module Main is main {
+	on #1 [] (%1) is main is static {
+		my $1 (%3)
+		my $2 (%4)
+
+		@0 {
+			send %3, #2
+			set $1
+			send %4, #2
+			set $2
+			push $1
+			send %2, #3
+			push $2
+			send %2, #3
+			return void
+		}
+	}
+}
