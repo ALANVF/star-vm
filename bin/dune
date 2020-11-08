@@ -1,0 +1,7 @@
+(executable
+  (public_name starvm)
+  (name main)
+  (libraries
+    starvm
+    ;base containers
+    ))
