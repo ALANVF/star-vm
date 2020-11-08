@@ -10,24 +10,17 @@
 &6 = Str "banana"
 &7 = Str "cherry"
 
-#1 = apple
-#2 = banana
-#3 = cherry
-
 kind Fruit (%1) {
-	has $1 is getter #1 => &1
-	has $2 is getter #2 => &2
-	has $3 is getter #3 => &3
+	has 0 => &1
+	has 1 => &2
+	has 2 => &3
 
 	cast %2 {
 		@0 {
 			push &4
 			push $0
 			kind_id
-			push &1
-			push &2
-			push &3
-			sec_table @1, @2, @3
+			sec_jtable @1, @2, @3
 			add
 			return
 		}

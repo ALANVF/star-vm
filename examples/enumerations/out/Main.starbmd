@@ -3,14 +3,13 @@
 %3 = use Fruit
 
 #1 = main
-#2 = banana
-#3 = say:
+#2 = say:
 
-module Main is main {
+class Main is main {
 	on #1 [] (%1) is main is static {
 		@0 {
-			send %3, #2
-			send %2, #3
+			kind %3, 1
+			send %2, #2
 			return void
 		}
 	}
