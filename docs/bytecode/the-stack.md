@@ -18,7 +18,7 @@ push &2
 sub
 push &3
 add
-debug inspectStack   ;=> [ Int 2 ]
+debug stack   ;=> [ Int 2 ]
 ```
 
 TODO: explain this in more detail

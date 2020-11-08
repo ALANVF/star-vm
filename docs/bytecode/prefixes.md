@@ -15,3 +15,6 @@ Selector
 
 ## .123
 Member
+
+## %.123
+Static member

@@ -21,30 +21,33 @@ Decreases the reference count of a value. If the reference count becomes 0, the 
 Does not have an effect on constants or uncounted values.
 
 
+### deinit
+
+
 ### push
 ```
 push &<const>
 push $<reg>
 push .<member>
-push %<type>, .<member>
+push %.<member>
 ```
 
 1) Pushes the constant `const` onto the stack.
 2) Pushes the register `reg` onto the stack.
 3) Pushes the member `member` of a value onto the stack.
-4) Pushes the member `member` of type `type` onto the stack.
+4) Pushes the static member `member` onto the stack.
 
 
 ### set
 ```
 set $<reg>
 set .<member>
-set %<type>, .<member>
+set %.<member>
 ```
 
 1) Assigns a value to the register `reg`.
 2) Assigns a value to the member `member` of a value.
-3) Assigns a value to the member `member` of type `type`.
+3) Assigns a value to the static member `member`.
 
 
 ### swap_reg
@@ -65,7 +68,7 @@ pop <depth>
 2) Pops `depth` values from the stack.
 
 
-## clear
+### clear
 ```
 clear
 ```
@@ -79,6 +82,12 @@ swap
 ```
 
 Swaps the last 2 values on the stack. This will fail if the stack has less than 2 values.
+
+
+### pin
+
+
+### unpin
 
 
 ### add
@@ -330,10 +339,13 @@ sec_table @<sec-1>, ...
 Switch case thing.
 
 
+### sec_jtable
+
+
 ### sec_ltable
 ```
-sec_ltable @<case-1> sec @<dest-1>, ...
-sec_ltable @<case-1> sec @<dest-1>, ..., else sec @<default-dest>
+sec_ltable @<case-1> => @<dest-1>, ...
+sec_ltable @<case-1> => @<dest-1>, ..., else @<default-dest>
 ```
 
 Switch case thing.
@@ -386,11 +398,10 @@ Terminator:
 
 ### pcsec
 ```
-pcsec @<sec>
 pcsec <depth>, @<sec>
 ```
 
-Exits the current code section, or multiple code sections if `depth` is specified. Then, it switches the current execution to a new code section.
+Exits `depth` number of code sections. Then, it switches the current execution to a new code section.
 
 Terminator: multi-section terminator
 
@@ -425,8 +436,7 @@ Terminator: method terminator.
 
 ### trap
 ```
-trap @<try-sec>, $<catch-reg>, @<catch-sec>
-trap @<try-sec>, $<catch-reg-1> sec @<catch-sec-1>, ...
+trap @<try-sec>, $<catch-reg-1> => @<catch-sec-1>, ...
 ```
 
 TODO
@@ -442,14 +452,17 @@ Successfully exits a trap section.
 Terminator: trap terminator
 
 
-### panic
+### throw
 ```
-panic
+throw
 ```
 
 Raises an error.
 
 Terminator: multi-section terminator
+
+
+### init
 
 
 ### send
@@ -462,6 +475,9 @@ send #<sel>
 2) Sends message `sel` to a value
 
 The arity of the call is determined by the selector.
+
+
+### super
 
 
 ### cast
@@ -478,6 +494,9 @@ isa %<type>
 ```
 
 Determines if a value is an instance of type `type`.
+
+
+### kind
 
 
 ### kind_id
@@ -506,14 +525,14 @@ Gets the underlying value from a kind value. Only valid for enumerated kinds.
 
 ### debug
 ```
-debug inspectEverything
-debug inspectRegs
-debug inspectStack
-debug inspectCallStack
-debug inspectCodeSectionStack
-debug inspectReg $<reg>
-debug inspectConst &<const>
-debug inspectType %<type>
+debug everything
+debug regs
+debug stack
+debug callStack
+debug codeSectionStack
+debug reg $<reg>
+debug const &<const>
+debug type %<type>
 ```
 
 Used for debugging purposes only.
