@@ -1,4 +1,4 @@
-[The code](../../src/star/bytecode/Star.Bytecode.Opcode.pas) should be helpful enough, but here's this anyways
+[The code](../../lib/opcode.ml) should be helpful enough, but here's this anyways
 
 
 ### retain
