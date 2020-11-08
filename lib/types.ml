@@ -4,147 +4,148 @@ open Index
 [@@@warning "-30"]
 
 type local_type =
-	| LImport of string * bool
-	| LExpand of type_index * type_index list
-	| LModule of tmodule
-	| LErased
-	| TParam of int * type_index list
-	| LLazy of (unit -> local_type)
+    | LImport of string * bool
+    | LExpand of type_index * type_index list
+    | LModule of tmodule
+    | LErased
+    | LParam of int * type_index list
+    | LLazy of (unit -> local_type)
+    | LThis
 
-and local_types_map = (type_index, local_type) Map.Poly.t
+and tlocal_types = (type_index, local_type) Hashtbl.t
 
 and tmodule = {
-	md_name: string;
-	mutable md_params: type_index list option;
-	mutable md_types: local_types_map;
-	mutable md_sels: tsel list;
-	md_type: ktype
+    m_name: string;
+    mutable m_params: type_index list option;
+    mutable m_types: tlocal_types;
+    mutable m_sels: tsel list;
+    m_type: ktype
 }
 
 and ktype =
-	| TClass of tclass
-	| TProtocol of tprotocol
-	| TValueKind of tvalue_kind
-	| TTaggedKind of ttagged_kind
-	| TNative of tnative
+    | TClass of tclass
+    | TProtocol of tprotocol
+    | TValueKind of tvalue_kind
+    | TTaggedKind of ttagged_kind
+    | TNative of tnative
 
 and tclass = {
-	mutable t_parents: type_index list;
+    mutable t_parents: type_index list;
 
-	mutable t_static_members: tmember list;
-	mutable t_members: tmember list;
+    mutable t_static_members: tmember list;
+    mutable t_members: tmember list;
 
-	mutable t_default_init: tmethod_body option;
-	mutable t_static_init: tmethod_body option;
-	
-	mutable t_inits: tmethod_table;
-	
-	mutable t_static_methods: tmethod_table;
-	mutable t_methods: tmethod_table;
-	
-	mutable t_casts: tcast_table;
+    mutable t_default_init: tmethod_body option;
+    mutable t_static_init: tmethod_body option;
+    
+    mutable t_inits: tmethod_table;
+    
+    mutable t_static_methods: tmethod_table;
+    mutable t_methods: tmethod_table;
+    
+    mutable t_casts: tcast_table;
 
-	mutable t_operators: toperator_table;
+    mutable t_operators: toperator_table;
 
-	mutable t_deinit: tmethod_body option;
-	mutable t_static_deinit: tmethod_body option
+    mutable t_deinit: tmethod_body option;
+    mutable t_static_deinit: tmethod_body option
 }
 
 and tprotocol = {
-	mutable t_parents: type_index list;
+    mutable t_parents: type_index list;
 
-	mutable t_static_members: tmember list;
-	mutable t_members: tmember list;
-	
-	mutable t_static_methods: tmethod_table;
-	mutable t_methods: tmethod_table;
-	
-	mutable t_casts: tcast_table;
+    mutable t_static_members: tmember list;
+    mutable t_members: tmember list;
+    
+    mutable t_static_methods: tmethod_table;
+    mutable t_methods: tmethod_table;
+    
+    mutable t_casts: tcast_table;
 
-	mutable t_operators: toperator_table
+    mutable t_operators: toperator_table
 }
 
 and tvalue_kind = {
-	k_is_flags: bool;
-	
-	vk_repr: type_index;
-	mutable vk_cases: tvalue_case list;
+    k_is_flags: bool;
+    
+    vk_repr: type_index;
+    mutable vk_cases: tvalue_case list;
 
-	mutable t_static_methods: tmethod_table;
-	mutable t_methods: tmethod_table;
-	
-	mutable t_casts: tcast_table;
+    mutable t_static_methods: tmethod_table;
+    mutable t_methods: tmethod_table;
+    
+    mutable t_casts: tcast_table;
 
-	mutable t_operators: toperator_table
+    mutable t_operators: toperator_table
 }
 
 and ttagged_kind = {
-	k_is_flags: bool;
+    k_is_flags: bool;
 
-	mutable tk_cases: ttagged_case list;
+    mutable tk_cases: ttagged_case list;
 
-	mutable t_parents: type_index list;
+    mutable t_parents: type_index list;
 
-	mutable t_static_members: tmember list;
-	mutable t_members: tmember list;
+    mutable t_static_members: tmember list;
+    mutable t_members: tmember list;
 
-	mutable t_default_init: tmethod_body option;
-	
-	mutable t_static_methods: tmethod_table;
-	mutable t_methods: tmethod_table;
-	
-	mutable t_casts: tcast_table;
+    mutable t_default_init: tmethod_body option;
+    
+    mutable t_static_methods: tmethod_table;
+    mutable t_methods: tmethod_table;
+    
+    mutable t_casts: tcast_table;
 
-	mutable t_operators: toperator_table
+    mutable t_operators: toperator_table
 }
 
 and tnative =
-	| NVoid
-	| NBool
-	| NInt8
-	| NUInt8
-	| NInt16
-	| NUInt16
-	| NInt32
-	| NUInt32
-	| NInt64
-	| NUInt64
-	| NPtr of type_index
-	| NFunc of type_index list * type_index
+    | NVoid
+    | NBool
+    | NInt8
+    | NUInt8
+    | NInt16
+    | NUInt16
+    | NInt32
+    | NUInt32
+    | NInt64
+    | NUInt64
+    | NPtr of type_index
+    | NFunc of type_index list * type_index
     | NOpaque
 
 
 and tmember = {
-	mb_type: type_index;
-	mb_getter: tsel option;
-	mb_setter: tsel option
+    mb_type: type_index;
+    mb_getter: tsel option;
+    mb_setter: tsel option
 }
 
 
 and tvalue_case =
-	| VCConst of const_index
+    | VCConst of const_index
 
 
 and ttagged_case = {
-	mutable tc_slots: type_index list
+    mutable tc_slots: type_index list
 }
 
 
-and tmethod_table = (sel_index, tmethod) Map.Poly.t
+and tmethod_table = (sel_index, tmethod) Hashtbl.t
 
-and tcast_table = (type_index, tcast) Map.Poly.t
+and tcast_table = (type_index, tcast) Hashtbl.t
 
-and toperator_table = (kmethod_op_opcode, toperator) Map.Poly.t
+and toperator_table = (kmethod_op_opcode, toperator) Hashtbl.t
 
 
 and tsel =
-	| SSingle of string
-	| SMulti of string list
+    | SSingle of string
+    | SMulti of string list
 
 
 and tsection = {
-	s_index: section_index;
-	mutable s_opcodes: Opcode.t list
+    s_index: section_index;
+    mutable s_opcodes: Opcode.t list
 }
 
 
@@ -155,84 +156,84 @@ and tcast = tmethod_cast tmethod_of
 and toperator = tmethod_op tmethod_of
 
 and 't tmethod_of = {
-	m_attrs: tmethod_attrs;
-	m_method: 't
+    mt_attrs: tmethod_attrs;
+    mt_method: 't
 }
 
 and tmethod_attrs = {
-	is_hidden: bool;
-	is_no_inherit: bool;
-	is_native: string option
+    is_hidden: bool;
+    is_no_inherit: bool;
+    is_native: string option
 }
 
 and tmethod_body = {
-	mutable b_registers: type_index list;
-	mutable b_sections: tsection list
+    mutable b_registers: type_index list;
+    mutable b_sections: tsection list
 }
 
 and tany_method =
-	| AMDefaultInit of tmethod_body
-	| AMStaticInit of tmethod_body
-	| AMInit of tdefault_method
-	| AMStatic of tdefault_method
-	| AMInstance of tdefault_method
-	| AMCast of tmethod_cast
-	| AMOperator of tmethod_op
-	| AMDeinit of tmethod_body
-	| AMStaticDeinit of tmethod_body
+    | AMDefaultInit of tmethod_body
+    | AMStaticInit of tmethod_body
+    | AMInit of tdefault_method
+    | AMStatic of tdefault_method
+    | AMInstance of tdefault_method
+    | AMCast of tmethod_cast
+    | AMOperator of tmethod_op
+    | AMDeinit of tmethod_body
+    | AMStaticDeinit of tmethod_body
 
 and tdefault_method = {
-	dm_sel: tsel;
-	mutable dm_kind: kdefault_method;
-	dm_return: type_index;
-	dm_body: tmethod_body
+    dm_sel: tsel;
+    mutable dm_kind: kdefault_method;
+    dm_return: type_index;
+    dm_body: tmethod_body
 }
 
 and kdefault_method =
-	| MNEmpty
-	| MNMulti of kdefault_method_multi
+    | MNEmpty
+    | MNMulti of kdefault_method_multi
 
 and kdefault_method_multi =
-	| MMSingle of kdefault_method_dispatch
-	| MMMulti of kdefault_method_dispatch list
+    | MMSingle of kdefault_method_dispatch
+    | MMMulti of kdefault_method_dispatch list
 
 and kdefault_method_dispatch =
-	| MDNormal of type_index list
-	| MDGeneric of local_types_map * type_index list
+    | MDNormal of type_index list
+    | MDGeneric of tlocal_types * type_index list
 
 and tmethod_cast = {
-	mc_kind: kmethod_cast;
-	mc_type: type_index;
-	mc_body: tmethod_body
+    mc_kind: kmethod_cast;
+    mc_type: type_index;
+    mc_body: tmethod_body
 }
 
 and kmethod_cast =
-	| MCNormal
-	| MCGeneric of local_types_map
+    | MCNormal
+    | MCGeneric of tlocal_types
 
 and tmethod_op = {
-	mo_kind: kmethod_op;
-	mo_body: tmethod_body
+    mo_kind: kmethod_op;
+    mo_body: tmethod_body
 }
 
 and kmethod_op =
-	| MOUnary
-	| MOBinary of kmethod_op_multi
+    | MOUnary
+    | MOBinary of kmethod_op_multi
 
 and kmethod_op_multi =
-	| MOMSingle of kmethod_op_dispatch
-	| MOMMulti of kmethod_op_dispatch list
+    | MOMSingle of kmethod_op_dispatch
+    | MOMMulti of kmethod_op_dispatch list
 
 and kmethod_op_dispatch =
-	| MODNormal of type_index
-	| MODGeneric of local_types_map * type_index
+    | MODNormal of type_index
+    | MODGeneric of tlocal_types * type_index
 
 and kmethod_op_opcode =
     | MOONeg
     | MOONot
     | MOOCompl
-	| MOOTruthy
-	| MOOAdd
+    | MOOTruthy
+    | MOOAdd
     | MOOSub
     | MOOMult
     | MOOPow
@@ -251,3 +252,11 @@ and kmethod_op_opcode =
     | MOOGe
     | MOOLt
     | MOOLe
+
+
+let resolve_local_type m i =
+    if i = 0 then Some LThis
+    else Hashtbl.find m.m_types i
+
+let get_local_type m i =
+    Option.value_exn (resolve_local_type m i)

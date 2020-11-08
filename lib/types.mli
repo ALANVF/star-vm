@@ -8,17 +8,18 @@ type local_type =
 	| LExpand of type_index * type_index list
 	| LModule of tmodule
 	| LErased
-	| TParam of int * type_index list
-	| LLazy of (unit -> local_type)
+	| LParam of int * type_index list
+    | LLazy of (unit -> local_type)
+    | LThis
 
-and local_types_map = (type_index, local_type) Map.Poly.t
+and tlocal_types = (type_index, local_type) Hashtbl.t
 
 and tmodule = {
-	md_name: string;
-	mutable md_params: type_index list option;
-	mutable md_types: local_types_map;
-	mutable md_sels: tsel list;
-	md_type: ktype
+	m_name: string;
+	mutable m_params: type_index list option;
+	mutable m_types: tlocal_types;
+	mutable m_sels: tsel list;
+	m_type: ktype
 }
 
 and ktype =
@@ -130,11 +131,11 @@ and ttagged_case = {
 }
 
 
-and tmethod_table = (sel_index, tmethod) Map.Poly.t
+and tmethod_table = (sel_index, tmethod) Hashtbl.t
 
-and tcast_table = (type_index, tcast) Map.Poly.t
+and tcast_table = (type_index, tcast) Hashtbl.t
 
-and toperator_table = (kmethod_op_opcode, toperator) Map.Poly.t
+and toperator_table = (kmethod_op_opcode, toperator) Hashtbl.t
 
 
 and tsel =
@@ -155,8 +156,8 @@ and tcast = tmethod_cast tmethod_of
 and toperator = tmethod_op tmethod_of
 
 and 't tmethod_of = {
-	m_attrs: tmethod_attrs;
-	m_method: 't
+	mt_attrs: tmethod_attrs;
+	mt_method: 't
 }
 
 and tmethod_attrs = {
@@ -198,7 +199,7 @@ and kdefault_method_multi =
 
 and kdefault_method_dispatch =
 	| MDNormal of type_index list
-	| MDGeneric of local_types_map * type_index list
+	| MDGeneric of tlocal_types * type_index list
 
 and tmethod_cast = {
 	mc_kind: kmethod_cast;
@@ -208,7 +209,7 @@ and tmethod_cast = {
 
 and kmethod_cast =
 	| MCNormal
-	| MCGeneric of local_types_map
+	| MCGeneric of tlocal_types
 
 and tmethod_op = {
 	mo_kind: kmethod_op;
@@ -225,7 +226,7 @@ and kmethod_op_multi =
 
 and kmethod_op_dispatch =
 	| MODNormal of type_index
-	| MODGeneric of local_types_map * type_index
+	| MODGeneric of tlocal_types * type_index
 
 and kmethod_op_opcode =
     | MOONeg
@@ -250,4 +251,9 @@ and kmethod_op_opcode =
     | MOOGt
     | MOOGe
     | MOOLt
-    | MOOLe
+	| MOOLe
+
+
+val resolve_local_type: tmodule -> type_index -> local_type option
+
+val get_local_type: tmodule -> type_index -> local_type

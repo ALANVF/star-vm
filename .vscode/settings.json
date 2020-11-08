@@ -4,6 +4,7 @@
 		"switch": "4.11.1"
 	},
 	"[ocaml]": {
-		"editor.tabSize": 4
+		"editor.tabSize": 4,
+		"editor.useTabStops": false
 	}
 }
