@@ -1,0 +1,50 @@
+%1 = use Star.Core.Int
+%2 = use Star.Core.Str
+
+&1 = Int 0
+&2 = Int 1
+&3 = Int 2
+
+&4 = Str "Fruit."
+&5 = Str "apple"
+&6 = Str "banana"
+&7 = Str "cherry"
+
+#1 = apple
+#2 = banana
+#3 = cherry
+
+kind Fruit (%1) {
+	has $1 is getter #1 => &1
+	has $2 is getter #2 => &2
+	has $3 is getter #3 => &3
+
+	cast %2 {
+		@0 {
+			push &4
+			push $0
+			kind_id
+			push &1
+			push &2
+			push &3
+			sec_table @1, @2, @3
+			add
+			return
+		}
+
+		@1 {
+			push &5
+			psec
+		}
+
+		@2 {
+			push &6
+			psec
+		}
+
+		@3 {
+			push &7
+			psec
+		}
+	}
+}

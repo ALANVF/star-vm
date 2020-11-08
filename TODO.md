@@ -1,3 +1,1 @@
-- rewrite binary input routines
-- clean up code
-- many more things...
+- Update examples according to new spec

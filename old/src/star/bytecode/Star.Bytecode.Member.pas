@@ -1,7 +1,7 @@
 unit Star.Bytecode.Member;
 
-{$SCOPEDENUMS+}
-{$MINENUMSIZE 1}
+{$scopedEnums+}
+{$minEnumSize 1}
 
 interface
 

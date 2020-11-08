@@ -1,7 +1,7 @@
 unit Star.Bytecode.&Type;
 
-{$SCOPEDENUMS+}
-{$MINENUMSIZE 1}
+{$scopedEnums+}
+{$minEnumSize 1}
 {$T+}
 
 interface
@@ -304,7 +304,7 @@ procedure TTypeParam.writeToBinary(const bf: TBinaryFile);
 begin
 	bf.specialize write<TTypeID>(TTypeID.param);
 	
-	inherited writeToBinary(bf);
+	inherited;
 	
 	bf.writeAll(parents);
 end;
@@ -314,7 +314,7 @@ procedure TTypeErased.writeToBinary(const bf: TBinaryFile);
 begin
 	bf.specialize write<TTypeID>(TTypeID.erased);
 
-	inherited writeToBinary(bf);
+	inherited;
 end;
 
 
@@ -348,14 +348,14 @@ begin
 	for i := low(staticMembers) to high(staticMembers) do freeAndNil(staticMembers[i]);
 	for i := low(staticMethods) to high(staticMethods) do freeAndNil(staticMethods[i]);
 
-	inherited destroy();
+	inherited;
 end;
 
 procedure TTypeNamespace.writeToBinary(const bf: TBinaryFile);
 var
 	hasStaticInit, hasStaticDeinit: boolean;
 begin
-	inherited writeToBinary(bf);
+	inherited;
 	
 	bf.writeAll(nestedTypes);
 	
@@ -379,7 +379,7 @@ procedure TTypeModule.writeToBinary(const bf: TBinaryFile);
 begin
 	bf.specialize write<TTypeID>(TTypeID.module);
 
-	inherited writeToBinary(bf);
+	inherited;
 end;
 
 
@@ -415,12 +415,12 @@ begin
 	for i := low(instanceMembers) to high(instanceMembers) do freeAndNil(instanceMembers[i]);
 	for i := low(instanceMethods) to high(instanceMethods) do freeAndNil(instanceMethods[i]);
 
-	inherited destroy();
+	inherited;
 end;
 
 procedure TTypeDispatchable.writeToBinary(const bf: TBinaryFile);
 begin
-	inherited writeToBinary(bf);
+	inherited;
 	
 	bf.specialize writeAllIO<TMember>(instanceMembers);
 	bf.writeAll(instanceSelectors);
@@ -461,14 +461,14 @@ begin
 	if defaultInit <> nil then freeAndNil(defaultInit);
 	if instanceDeinit <> nil then freeAndNil(instanceDeinit);
 
-	inherited destroy();
+	inherited;
 end;
 
 procedure TTypeClassLike.writeToBinary(const bf: TBinaryFile);
 var
 	hasDefaultInit, hasInstanceDeinit: boolean;
 begin
-	inherited writeToBinary(bf);
+	inherited;
 
 	hasDefaultInit := defaultInit <> nil;
 	bf.write(hasDefaultInit);
@@ -518,14 +518,14 @@ var
 begin
 	for i := low(initMethods) to high(initMethods) do freeAndNil(initMethods[i]);
 
-	inherited destroy();
+	inherited;
 end;
 
 procedure TTypeClass.writeToBinary(const bf: TBinaryFile);
 begin
 	bf.specialize write<TTypeID>(TTypeID.&class);
 
-	inherited writeToBinary(bf);
+	inherited;
 
 	bf.writeAll(initSelectors);
 	bf.specialize writeAllIO<TMethod>(initMethods);
@@ -536,7 +536,7 @@ procedure TTypeProtocol.writeToBinary(const bf: TBinaryFile);
 begin
 	bf.specialize write<TTypeID>(TTypeID.protocol);
 
-	inherited writeToBinary(bf);
+	inherited;
 end;
 
 
@@ -550,7 +550,7 @@ destructor TTypeValueKind.TCase.destroy;
 begin
 	if defaultInit <> nil then freeAndNil(defaultInit);
 
-	inherited destroy();
+	inherited;
 end;
 
 procedure TTypeValueKind.TCase.writeToBinary(const bf: TBinaryFile);
@@ -603,14 +603,14 @@ begin
 	for i := low(cases) to high(cases) do
 		freeAndNil(cases[i]);
 
-	inherited destroy();
+	inherited;
 end;
 
 procedure TTypeValueKind.writeToBinary(const bf: TBinaryFile);
 begin
 	bf.specialize write<TTypeID>(TTypeID.valueKind);
 
-	inherited writeToBinary(bf);
+	inherited;
 	
 	bf.write(baseType);
 	bf.specialize writeAllIO<TTypeValueKind.TCase>(cases);
@@ -628,7 +628,7 @@ destructor TTypeTaggedKind.TCase.destroy;
 begin
 	if defaultInit <> nil then freeAndNil(defaultInit);
 
-	inherited destroy();
+	inherited;
 end;
 
 procedure TTypeTaggedKind.TCase.writeToBinary(const bf: TBinaryFile);
@@ -681,14 +681,14 @@ begin
 	for i := low(cases) to high(cases) do
 		freeAndNil(cases[i]);
 
-	inherited destroy();
+	inherited;
 end;
 
 procedure TTypeTaggedKind.writeToBinary(const bf: TBinaryFile);
 begin
 	bf.specialize write<TTypeID>(TTypeID.taggedKind);
 
-	inherited writeToBinary(bf);
+	inherited;
 	
 	bf.specialize writeAllIO<TTypeTaggedKind.TCase>(cases);
 end;
@@ -723,7 +723,7 @@ procedure TTypeNative.writeToBinary(const bf: TBinaryFile);
 begin
 	bf.specialize write<TTypeID>(TTypeID.native);
 
-	inherited writeToBinary(bf);
+	inherited;
 end;
 
 end.

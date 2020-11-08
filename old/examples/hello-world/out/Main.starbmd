@@ -1,0 +1,18 @@
+%1 = use Star.Void
+%2 = use Star.Core
+%3 = use Star.Core.Str
+
+&1 = Str "Hello, world!"
+
+#1 = main
+#2 = say:
+
+module Main is main {
+	on #1 [] (%1) is main is static {
+		@0 {
+			push &1
+			send %2, #2
+			return void
+		}
+	}
+}

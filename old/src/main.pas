@@ -64,10 +64,10 @@ begin
 
 	writeln('}');
 
-	bf := TBinaryFile.create('out.blh');
+	{bf := TBinaryFile.create('out.blh');
 	bf.specialize writeIO<TTypeModule>(main);
 	bf.close();
-	bf.destroy();
+	bf.destroy();}
 
 	//method.destroy();
 	main.destroy();

@@ -1,5 +1,8 @@
 unit Star.Bytecode.NativeRepr;
 
+{$scopedEnums+}
+{$minEnumSize 1}
+
 interface
 
 type

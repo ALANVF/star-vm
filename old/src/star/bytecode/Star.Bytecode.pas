@@ -1,8 +1,5 @@
 unit Star.Bytecode;
 
-{$SCOPEDENUMS+}
-{$MINENUMSIZE 1}
-
 interface
 
 uses
@@ -14,7 +11,8 @@ uses
 	Star.Bytecode.CodeSection,
 	Star.Bytecode.Method,
 	Star.Bytecode.&Type,
-	Star.Bytecode.Builder;
+	Star.Bytecode.Builder,
+	Star.Bytecode.ConstantsTable;
 
 implementation
 
