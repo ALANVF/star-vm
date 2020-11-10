@@ -145,7 +145,7 @@ let dump op =
     | OPushConst c -> sprintf "push &%i" c
     | OPushReg r -> sprintf "push $%i" r
     | OPushMember m -> sprintf "push .%i" m
-	| OPushStaticMember m -> sprintf "push %%.%i" m
+    | OPushStaticMember m -> sprintf "push %%.%i" m
     | OSetReg r -> sprintf "set $%i" r
     | OSetMember m ->  sprintf "set .%i" m
     | OSetStaticMember m -> sprintf "set %%.%i" m
