@@ -5,7 +5,7 @@ open Types
 [@@@warning "-30"]
 
 type tvalue = {
-    t: ttype;
+    t: Type.t;
     kind: kvalue
 }
 
