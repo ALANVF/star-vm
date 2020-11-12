@@ -19,6 +19,7 @@ and tmodule = {
     mutable m_params: type_index list option;
     mutable m_types: tlocal_types;
     mutable m_sels: tsel list;
+    mutable m_consts: Constant.t list;
     m_type: ktype
 }
 
