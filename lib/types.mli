@@ -2,12 +2,11 @@ open Base
 open Index
 
 (* TODO:
- * - less recursiveness
+ * - less redundancy
  * - change index types to something stronger
  *)
 
 [@@@warning "-30"]
-
 
 type tsel =
     | SSingle of string
@@ -18,11 +17,6 @@ type tmember = {
     mb_getter: tsel option;
     mb_setter: tsel option
 }
-
-
-(*module M: sig
-    type type_t = 
-end*)
 
 
 module rec Type: sig
