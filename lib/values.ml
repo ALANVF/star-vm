@@ -1,14 +1,21 @@
 open Base
 open Stdint
+open Types
 
 [@@@warning "-30"]
 
-type tvalue =
-    | VClass of Types.tclass * class_value
-    | VProtocol of Types.tprotocol * tvalue
-    | VValueKind of Types.tvalue_kind * value_kind_value
-    | VTaggedKind of Types.ttagged_kind * tagged_kind_value
-    | VNative of Types.tnative * native_value
+type tvalue = {
+    t: ttype;
+    kind: kvalue
+}
+
+and kvalue =
+    | VClass of class_value
+    | VValueKind of value_kind_value
+    | VTaggedKind of tagged_kind_value
+    | VNative of native_value
+    | VMasked of tvalue
+
 
 and class_value = tvalue array
 
@@ -36,3 +43,15 @@ and native_value =
     | VPtr of tvalue Option_array.t
     (*| VFunc of (tvalue list -> tvalue option)*)
     | VOpaque of Caml.Obj.t
+
+
+(*let get_type = function
+    | VClass(t, _) -> TClass t
+    | VValueKind(t, _) -> TValueKind t
+    | VTaggedKind(t, _) -> TTaggedKind t
+    | VNative(t, _) -> TNative t
+    | VMasked(t, _) -> t
+
+let rec get_full_type = function
+    | VMasked(_, v) -> get_full_type v
+    | t -> get_type t*)

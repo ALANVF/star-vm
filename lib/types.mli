@@ -8,16 +8,16 @@ open Index
 
 [@@@warning "-30"]
 
-type local_type =
-    | LImport of {name: string; is_circular: bool}
+type ttype =
+    | LImport of {name: string; is_circular: string list option}
     | LExpand of {index: type_index; args: type_index list}
     | LModule of tmodule
     | LErased
     | LParam of {unique_id: int; params: type_index list}
-    | LLazy of (unit -> local_type)
+    | LLazy of (unit -> ttype)
     | LThis
 
-and tlocal_types = (type_index, local_type) Hashtbl.t
+and tlocal_types = (type_index, ttype) Hashtbl.t
 
 and tmodule = {
     m_name: string;
@@ -260,6 +260,19 @@ and kmethod_op_opcode =
     | MOOLe
 
 
-val resolve_local_type: tmodule -> type_index -> local_type option
+module Vm: sig
+    type t = {
+        mutable modules: (string, tmodule) Hashtbl.t
+    }
 
-val get_local_type: tmodule -> type_index -> local_type
+    val lookup_module: t -> string -> tmodule option
+
+    val resolve_module: t -> tmodule -> ttype -> tmodule option
+
+    val get_module: t -> tmodule -> ttype -> tmodule
+end
+
+
+val resolve_local_type: tmodule -> type_index -> ttype option
+
+val get_local_type: tmodule -> type_index -> ttype

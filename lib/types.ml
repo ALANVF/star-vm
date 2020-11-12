@@ -3,16 +3,16 @@ open Index
 
 [@@@warning "-30"]
 
-type local_type =
-    | LImport of {name: string; is_circular: bool}
+type ttype =
+    | LImport of {name: string; is_circular: string list option}
     | LExpand of {index: type_index; args: type_index list}
     | LModule of tmodule
     | LErased
     | LParam of {unique_id: int; params: type_index list}
-    | LLazy of (unit -> local_type)
+    | LLazy of (unit -> ttype)
     | LThis
 
-and tlocal_types = (type_index, local_type) Hashtbl.t
+and tlocal_types = (type_index, ttype) Hashtbl.t
 
 and tmodule = {
     m_name: string;
@@ -253,6 +253,28 @@ and kmethod_op_opcode =
     | MOOGe
     | MOOLt
     | MOOLe
+
+
+module Vm = struct
+    type t = {
+        mutable modules: (string, tmodule) Hashtbl.t
+    }
+
+    let lookup_module {modules; _} name = Hashtbl.find modules name
+
+    let rec resolve_module vm this t =
+        match t with
+        | LImport {name; is_circular = _} -> lookup_module vm name
+        | LExpand _ -> raise (Failure "NYI")
+        | LModule m -> Some m
+        | LErased -> raise (Invalid_argument "Cannot resolve an erased type")
+        | LParam _ -> raise (Invalid_argument "Cannot resolve a generic parameter type")
+        | LLazy f -> resolve_module vm this (f ())
+        | LThis -> Some this
+    
+    let get_module vm this t =
+        Option.value_exn (resolve_module vm this t)
+end
 
 
 let resolve_local_type m i =
