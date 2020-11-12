@@ -1,5 +1,7 @@
 (library
   (name starvm)
   (libraries
-    base ;containers
+    base
+    ;containers
+    stdint
     ))
