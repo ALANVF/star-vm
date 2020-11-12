@@ -4,11 +4,11 @@ open Index
 [@@@warning "-30"]
 
 type local_type =
-    | LImport of string * bool
-    | LExpand of type_index * type_index list
+    | LImport of {name: string; is_circular: bool}
+    | LExpand of {index: type_index; args: type_index list}
     | LModule of tmodule
     | LErased
-    | LParam of int * type_index list
+    | LParam of {unique_id: int; params: type_index list}
     | LLazy of (unit -> local_type)
     | LThis
 
@@ -111,7 +111,7 @@ and tnative =
     | NInt64
     | NUInt64
     | NPtr of type_index
-    | NFunc of type_index list * type_index
+    | NFunc of {params: type_index list; return: type_index}
     | NOpaque
 
 
@@ -199,7 +199,7 @@ and kdefault_method_multi =
 
 and kdefault_method_dispatch =
     | MDNormal of type_index list
-    | MDGeneric of tlocal_types * type_index list
+    | MDGeneric of {locals: tlocal_types; params: type_index list}
 
 and tmethod_cast = {
     mc_kind: kmethod_cast;
@@ -226,7 +226,7 @@ and kmethod_op_multi =
 
 and kmethod_op_dispatch =
     | MODNormal of type_index
-    | MODGeneric of tlocal_types * type_index
+    | MODGeneric of {locals: tlocal_types; param: type_index}
 
 and kmethod_op_opcode =
     | MOONeg
