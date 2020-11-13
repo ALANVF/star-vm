@@ -35,17 +35,25 @@ module rec Type: sig
         | KValueKind of ValueKind.t
         | KTaggedKind of TaggedKind.t
         | KNative of Native.t
+    
+    module Table: sig
+        type t = (type_index, Type.t) Hashtbl.t
+    end
 end
 
 and Module: sig
     type t = {
         m_name: string;
         mutable m_params: type_index list option;
-        mutable m_types: (type_index, Type.t) Hashtbl.t;
+        mutable m_types: Type.Table.t;
         mutable m_sels: tsel list;
         mutable m_consts: Constant.t list;
         m_type: Type.k
     }
+
+    val resolve_type: t -> type_index -> Type.t option
+
+    val get_type: t -> type_index -> Type.t
 end
 
 and Class: sig
@@ -151,97 +159,68 @@ and Native: sig
 end
 
 and Methods: sig
-    type tmethod_table = (sel_index, tmethod) Hashtbl.t
+    type kdispatch = [
+        | `Normal
+        | `Generic of Type.Table.t
+    ]
 
-    and tcast_table = (type_index, tcast) Hashtbl.t
+    type tdispatch = [
+        | `Single of kdispatch
+        | `Multi of kdispatch list
+    ]
 
-    and toperator_table = (kmethod_op_opcode, toperator) Hashtbl.t
 
-
-    and tsection = {
+    type tsection = {
         s_index: section_index;
         mutable s_opcodes: Opcode.t list
     }
 
 
-    and tmethod = tdefault_method Methods.tmethod_of
-
-    and tcast = Methods.tmethod_cast Methods.tmethod_of
-
-    and toperator = Methods.tmethod_op Methods.tmethod_of
-
-    and 't tmethod_of = {
-        mt_attrs: Methods.tmethod_attrs;
-        mt_method: 't
-    }
-
-    and tmethod_attrs = {
-        is_hidden: bool;
-        is_no_inherit: bool;
-        is_native: string option
-    }
-
-    and tmethod_body = {
+    type tmethod_body = {
         mutable b_registers: type_index list;
         mutable b_sections: tsection list
     }
 
+
     and tany_method =
-        | AMDefaultInit of Methods.tmethod_body
-        | AMStaticInit of Methods.tmethod_body
+        | AMDefaultInit of tmethod_body
+        | AMStaticInit of tmethod_body
         | AMInit of tdefault_method
         | AMStatic of tdefault_method
         | AMInstance of tdefault_method
-        | AMCast of Methods.tmethod_cast
-        | AMOperator of Methods.tmethod_op
-        | AMDeinit of Methods.tmethod_body
-        | AMStaticDeinit of Methods.tmethod_body
+        | AMCast of tmethod_cast
+        | AMOperator of tmethod_op
+        | AMDeinit of tmethod_body
+        | AMStaticDeinit of tmethod_body
 
+    
     and tdefault_method = {
         dm_sel: tsel;
-        mutable dm_kind: kdefault_method;
+        dm_kind: kdefault_method;
         dm_return: type_index;
-        dm_body: Methods.tmethod_body
+        dm_body: tmethod_body
     }
 
     and kdefault_method =
-        | MNEmpty
-        | MNMulti of kdefault_method_multi
+        | DMEmpty
+        | DMMulti of {params: type_index list; dispatch: tdispatch}
 
-    and kdefault_method_multi =
-        | MMSingle of kdefault_method_dispatch
-        | MMMulti of kdefault_method_dispatch list
-
-    and kdefault_method_dispatch =
-        | MDNormal of type_index list
-        | MDGeneric of {locals: (type_index, Type.t) Hashtbl.t; params: type_index list}
-
+    
     and tmethod_cast = {
-        mc_kind: kmethod_cast;
+        mc_kind: kdispatch;
         mc_type: type_index;
-        mc_body: Methods.tmethod_body
+        mc_body: tmethod_body
     }
 
-    and kmethod_cast =
-        | MCNormal
-        | MCGeneric of (type_index, Type.t) Hashtbl.t
-
+    
     and tmethod_op = {
         mo_kind: kmethod_op;
-        mo_body: Methods.tmethod_body
+        mo_body: tmethod_body
     }
 
     and kmethod_op =
         | MOUnary
-        | MOBinary of kmethod_op_multi
-
-    and kmethod_op_multi =
-        | MOMSingle of kmethod_op_dispatch
-        | MOMMulti of kmethod_op_dispatch list
-
-    and kmethod_op_dispatch =
-        | MODNormal of type_index
-        | MODGeneric of {locals: (type_index, Type.t) Hashtbl.t; param: type_index}
+        | MOBinary of {param: type_index; dispatch: tdispatch}
 
     and kmethod_op_opcode =
         | MOONeg
@@ -267,22 +246,28 @@ and Methods: sig
         | MOOGe
         | MOOLt
         | MOOLe
-end
 
-
-module Vm: sig
-    type t = {
-        mutable modules: (string, Module.t) Hashtbl.t
+    
+    type tmethod_attrs = {
+        is_hidden: bool;
+        is_no_inherit: bool;
+        is_native: string option
     }
 
-    val lookup_module: t -> string -> Module.t option
+    type 't tmethod_of = {
+        mt_attrs: tmethod_attrs;
+        mt_method: 't
+    }
 
-    val resolve_module: t -> Module.t -> Type.t -> Module.t option
+    type tmethod = tdefault_method tmethod_of
 
-    val get_module: t -> Module.t -> Type.t -> Module.t
+    type tcast = tmethod_cast tmethod_of
+
+    type toperator = tmethod_op tmethod_of
+    
+    type tmethod_table = (sel_index, tmethod) Hashtbl.t
+
+    type tcast_table = (type_index, tcast) Hashtbl.t
+
+    type toperator_table = (kmethod_op_opcode, toperator) Hashtbl.t
 end
-
-
-val resolve_local_type: Module.t -> type_index -> Type.t option
-
-val get_local_type: Module.t -> type_index -> Type.t
