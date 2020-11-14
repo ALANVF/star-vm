@@ -7,6 +7,11 @@ type t = {
 }
 
 
+let create () =
+    {
+        modules = Hashtbl.create (module String) ~growth_allowed: true
+    }
+
 let lookup_module {modules; _} name = Hashtbl.find_multi modules name
 
 let add_module {modules; _} m = let open Module in
@@ -14,7 +19,9 @@ let add_module {modules; _} m = let open Module in
         ~key: m.m_name
         ~data: m
 
-let rec resolve_module vm this t = let open Type in
+let rec resolve_module vm this t =
+    let open Type in
+
     match t with
     | TImport {name; _} -> begin
         match lookup_module vm name with
@@ -32,3 +39,17 @@ let rec resolve_module vm this t = let open Type in
 
 let get_module vm this t =
     Option.value_exn (resolve_module vm this t)
+
+let rec simplify_type vm this t =
+    let open Type in
+
+    match t with
+    | TImport {name; _} -> begin
+        match lookup_module vm name with
+        | [] -> failwith ("Module `" ^ name ^ "` does not exist!")
+        | [m] -> TModule m
+        | ml -> TMultiModule ml
+    end
+    | TExpand _ -> failwith "NYI"
+    | TLazy f -> simplify_type vm this (f ())
+    | _ -> t

@@ -30,31 +30,35 @@ module rec Type: sig
         | TLazy of (unit -> t)
         | TThis
     
+    module Table: sig
+        type t = (type_index, Type.t) Hashtbl.t
+
+        val create: unit -> t
+    end
+end
+
+and Module: sig
     type k =
         | KClass of Class.t
         | KProtocol of Protocol.t
         | KValueKind of ValueKind.t
         | KTaggedKind of TaggedKind.t
         | KNative of Native.t
-    
-    module Table: sig
-        type t = (type_index, Type.t) Hashtbl.t
-    end
-end
 
-and Module: sig
     type t = {
         m_name: string;
-        mutable m_params: type_index list option;
+        mutable m_params: type_index list;
         mutable m_types: Type.Table.t;
         mutable m_sels: tsel list;
         mutable m_consts: Constant.t list;
-        m_type: Type.k
+        m_type: k
     }
 
     val resolve_type: t -> type_index -> Type.t option
 
     val get_type: t -> type_index -> Type.t
+
+    (*val most_specific_module: modules: t list -> args: Type.t list -> t option*)
 end
 
 and Class: sig
