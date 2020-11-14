@@ -19,6 +19,7 @@ module rec Type: sig
         | TImport of {name: string; is_circular: string list option}
         | TExpand of {index: type_index; args: type_index list}
         | TModule of Module.t
+        | TMultiModule of Module.t list
         | TErased
         | TParam of {unique_id: int; params: type_index list}
         | TLazy of (unit -> t)
@@ -39,6 +40,7 @@ end = struct
         | TImport of {name: string; is_circular: string list option}
         | TExpand of {index: type_index; args: type_index list}
         | TModule of Module.t
+        | TMultiModule of Module.t list
         | TErased
         | TParam of {unique_id: int; params: type_index list}
         | TLazy of (unit -> t)
