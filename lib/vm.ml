@@ -9,7 +9,7 @@ type t = {
 
 let create () =
     {
-        modules = Hashtbl.create (module String) ~growth_allowed: true
+        modules = Hashtbl.Poly.create()
     }
 
 let lookup_module {modules; _} name = Hashtbl.find_multi modules name

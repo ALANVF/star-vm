@@ -16,7 +16,7 @@ type tmember = {
 
 module rec Type: sig
     type t =
-        | TImport of {name: string; is_circular: string list option}
+        | TImport of {name: string; circular: string list option}
         | TExpand of {index: type_index; args: type_index list}
         | TModule of Module.t
         | TMultiModule of Module.t list
@@ -32,7 +32,7 @@ module rec Type: sig
     end
 end = struct
     type t =
-        | TImport of {name: string; is_circular: string list option}
+        | TImport of {name: string; circular: string list option}
         | TExpand of {index: type_index; args: type_index list}
         | TModule of Module.t
         | TMultiModule of Module.t list
@@ -44,7 +44,7 @@ end = struct
     module Table = struct
         type t = (type_index, Type.t) Hashtbl.t
         
-        let create () = Hashtbl.create (module Int) ~growth_allowed: true
+        let create () = Hashtbl.Poly.create()
     end
 end
 
@@ -58,7 +58,7 @@ and Module: sig
     
     type t = {
         m_name: string;
-        mutable m_params: type_index list;
+        mutable m_params: type_index list option;
         mutable m_types: Type.Table.t;
         mutable m_sels: tsel list;
         mutable m_consts: Constant.t list;
@@ -80,7 +80,7 @@ end = struct
 
     type t = {
         m_name: string;
-        mutable m_params: type_index list;
+        mutable m_params: type_index list option;
         mutable m_types: Type.Table.t;
         mutable m_sels: tsel list;
         mutable m_consts: Constant.t list;
@@ -121,6 +121,21 @@ and Class: sig
         mutable t_deinit: Methods.tmethod_body option;
         mutable t_static_deinit: Methods.tmethod_body option
     }
+
+    val create:
+        ?parents: type_index list ->
+        ?static_members: tmember list ->
+        ?members: tmember list ->
+        ?default_init: Methods.tmethod_body option ->
+        ?static_init: Methods.tmethod_body option ->
+        ?inits: Methods.tmethod_table ->
+        ?static_methods: Methods.tmethod_table ->
+        ?methods: Methods.tmethod_table ->
+        ?casts: Methods.tcast_table ->
+        ?operators: Methods.toperator_table ->
+        ?deinit: Methods.tmethod_body option ->
+        ?static_deinit: Methods.tmethod_body option ->
+        unit -> t
 end = struct
     type t = {
         mutable t_parents: type_index list;
@@ -143,6 +158,35 @@ end = struct
         mutable t_deinit: Methods.tmethod_body option;
         mutable t_static_deinit: Methods.tmethod_body option
     }
+
+    let create
+        ?(parents = [])
+        ?(static_members = [])
+        ?(members = [])
+        ?(default_init = None)
+        ?(static_init = None)
+        ?(inits = Hashtbl.Poly.create())
+        ?(static_methods = Hashtbl.Poly.create())
+        ?(methods = Hashtbl.Poly.create())
+        ?(casts = Hashtbl.Poly.create())
+        ?(operators = Hashtbl.Poly.create())
+        ?(deinit = None)
+        ?(static_deinit = None)
+    () =
+        {
+            t_parents = parents;
+            t_static_members = static_members;
+            t_members = members;
+            t_default_init = default_init;
+            t_static_init = static_init;
+            t_inits = inits;
+            t_static_methods = static_methods;
+            t_methods = methods;
+            t_casts = casts;
+            t_operators = operators;
+            t_deinit = deinit;
+            t_static_deinit = static_deinit
+        }
 end
 
 and Protocol: sig
@@ -274,7 +318,7 @@ and Native: sig
         | NInt64
         | NUInt64
         | NPtr of type_index
-        | NFunc of {params: type_index list; return: type_index}
+        (*| NFunc of {params: type_index list; return: type_index}*)
         | NOpaque
 end = struct
     type t =
@@ -289,7 +333,7 @@ end = struct
         | NInt64
         | NUInt64
         | NPtr of type_index
-        | NFunc of {params: type_index list; return: type_index}
+        (*| NFunc of {params: type_index list; return: type_index}*)
         | NOpaque
 end
 

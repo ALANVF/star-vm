@@ -21,7 +21,7 @@ type tmember = {
 
 module rec Type: sig
     type t =
-        | TImport of {name: string; is_circular: string list option}
+        | TImport of {name: string; circular: string list option}
         | TExpand of {index: type_index; args: type_index list}
         | TModule of Module.t
         | TMultiModule of Module.t list
@@ -47,7 +47,7 @@ and Module: sig
 
     type t = {
         m_name: string;
-        mutable m_params: type_index list;
+        mutable m_params: type_index list option;
         mutable m_types: Type.Table.t;
         mutable m_sels: tsel list;
         mutable m_consts: Constant.t list;
@@ -83,6 +83,21 @@ and Class: sig
         mutable t_deinit: Methods.tmethod_body option;
         mutable t_static_deinit: Methods.tmethod_body option
     }
+
+    val create:
+        ?parents: type_index list ->
+        ?static_members: tmember list ->
+        ?members: tmember list ->
+        ?default_init: Methods.tmethod_body option ->
+        ?static_init: Methods.tmethod_body option ->
+        ?inits: Methods.tmethod_table ->
+        ?static_methods: Methods.tmethod_table ->
+        ?methods: Methods.tmethod_table ->
+        ?casts: Methods.tcast_table ->
+        ?operators: Methods.toperator_table ->
+        ?deinit: Methods.tmethod_body option ->
+        ?static_deinit: Methods.tmethod_body option ->
+        unit -> t
 end
 
 and Protocol: sig
@@ -159,7 +174,7 @@ and Native: sig
         | NInt64
         | NUInt64
         | NPtr of type_index
-        | NFunc of {params: type_index list; return: type_index}
+        (*| NFunc of {params: type_index list; return: type_index}*)
         | NOpaque
 end
 
