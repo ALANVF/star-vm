@@ -23,6 +23,7 @@ module Checks: sig
     type tmatch_type = [
         | `IsExact
         | `IsSame
+        | `IsDerivedParent of (type_index * tmatch_type) list
         | `IsParent of (type_index * tmatch_type) list
         | `IsDerived of tmatch_type list
         | `IsDerivedParam of tmatch_type list list
@@ -32,11 +33,13 @@ module Checks: sig
     type tmatch_type_result = [ tmatch_type | `Failed ]
 
 
-    val match_type: t -> Module.t -> target: Type.t -> parent: Type.t -> tmatch_type_result
+    val match_type: ?strict: bool -> t -> Module.t -> target: Type.t -> parent: Type.t -> tmatch_type_result
 
-    val match_types: t -> Module.t -> targets: type_index list -> parents: type_index list -> tmatch_type list option
+    val match_types: ?strict: bool -> t -> Module.t -> targets: type_index list -> parents: type_index list -> tmatch_type list option
 
-    val match_parents: t -> Module.t -> target: Type.t -> parents: type_index list -> tmatch_type list option
+    val try_match_types: ?strict: bool -> t -> Module.t -> targets: type_index list -> parents: type_index list -> tmatch_type list option
 
-    val match_module: t -> Module.t -> target: Module.t -> parent: Module.t -> tmatch_type_result
+    val match_parents: ?strict: bool -> t -> Module.t -> target: Type.t -> parents: type_index list -> tmatch_type list option
+
+    val match_module: ?strict: bool -> t -> Module.t -> target: Module.t -> parent: Module.t -> tmatch_type_result
 end
