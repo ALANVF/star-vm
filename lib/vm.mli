@@ -1,5 +1,6 @@
 open Base
 open Types
+open Index
 
 type t = {
     mutable modules: (string, Module.t list) Hashtbl.t
@@ -16,3 +17,23 @@ val resolve_module: t -> Module.t -> Type.t -> (Module.t, Module.t list) Either.
 val get_module: t -> Module.t -> Type.t -> (Module.t, Module.t list) Either.t
 
 val simplify_type: t -> Module.t -> Type.t -> Type.t
+
+
+module Checks: sig
+    type tmatch_type = [
+        | `IsExact
+        | `IsSame
+        | `IsDerived of tmatch_type list
+        | `IsDerivedParam of tmatch_type list list
+        | `IsParametric of tmatch_type * tmatch_type list
+        | `IsErased
+    ]
+    type tmatch_type_result = [ tmatch_type | `Failed ]
+
+
+    val match_type: t -> Module.t -> target: Type.t -> parent: Type.t -> tmatch_type_result
+
+    val match_types: t -> Module.t -> targets: type_index list -> parents: type_index list -> tmatch_type list option
+
+    val match_parents: t -> Module.t -> target: Type.t -> parents: type_index list -> tmatch_type list option
+end

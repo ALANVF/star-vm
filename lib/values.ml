@@ -17,7 +17,7 @@ and kvalue =
     | VMasked of tvalue
 
 
-and class_value = tvalue array
+and class_value = tvalue Option_array.t
 
 and value_kind_value = {
     tag: int;
@@ -27,7 +27,7 @@ and value_kind_value = {
 and tagged_kind_value = {
     tag: int;
     values: tvalue list;
-    members: tvalue array
+    members: tvalue Option_array.t
 }
 
 and native_value =

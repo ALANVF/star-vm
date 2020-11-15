@@ -95,7 +95,7 @@ type t =
     | OSendInit of type_index * sel_index
     | OSendStatic of type_index * sel_index
     | OSendObj of sel_index
-    | OSendSuper of type_index * sel_index
+    | OSendSuper of type_index * sel_index option
 
     | OCast of type_index
     | OIsA of type_index

@@ -21,7 +21,7 @@ module rec Type: sig
         | TModule of Module.t
         | TMultiModule of Module.t list
         | TErased
-        | TParam of {unique_id: int; params: type_index list}
+        | TParam of {unique_id: int; parents: type_index list; params: type_index list}
         | TLazy of (unit -> t)
         | TThis
     
@@ -37,7 +37,7 @@ end = struct
         | TModule of Module.t
         | TMultiModule of Module.t list
         | TErased
-        | TParam of {unique_id: int; params: type_index list}
+        | TParam of {unique_id: int; parents: type_index list; params: type_index list}
         | TLazy of (unit -> t)
         | TThis
     
@@ -58,7 +58,7 @@ and Module: sig
     
     type t = {
         m_name: string;
-        mutable m_params: type_index list option;
+        mutable m_params: type_index list;
         mutable m_types: Type.Table.t;
         mutable m_sels: tsel list;
         mutable m_consts: Constant.t list;
@@ -80,7 +80,7 @@ end = struct
 
     type t = {
         m_name: string;
-        mutable m_params: type_index list option;
+        mutable m_params: type_index list;
         mutable m_types: Type.Table.t;
         mutable m_sels: tsel list;
         mutable m_consts: Constant.t list;

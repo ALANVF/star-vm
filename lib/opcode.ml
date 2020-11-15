@@ -95,7 +95,7 @@ type t =
     | OSendInit of type_index * sel_index
     | OSendStatic of type_index * sel_index
     | OSendObj of sel_index
-    | OSendSuper of type_index * sel_index
+    | OSendSuper of type_index * sel_index option
 
     | OCast of type_index
     | OIsA of type_index
@@ -228,10 +228,11 @@ let dump op =
         )
     | OPopTrap -> "ptrap"
     | OThrow -> "throw"
-    | OSendInit(t, s) -> "init " ^ fsendt t s
+    | OSendInit(t, s) -> "init" ^ fsendt t s
     | OSendStatic(t, s) -> "send" ^ fsendt t s
     | OSendObj s -> sprintf "send #%i" s
-    | OSendSuper(st, s) -> "super" ^ fsendt st s
+    | OSendSuper(st, None) -> "super " ^ ftype st
+    | OSendSuper(st, Some s) -> "super" ^ fsendt st s
     | OCast t -> "cast " ^ ftype t
     | OIsA t -> "isa " ^ ftype t
     | OInitKind(t, i) -> sprintf "kind %%%i, %i" t i

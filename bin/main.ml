@@ -6,7 +6,7 @@ let load_natives vm =
     let basic name repr =
         Module.{
             m_name = name;
-            m_params = None;
+            m_params = [];
             m_types = Type.Table.create();
             m_sels = [];
             m_consts = [];
@@ -18,7 +18,7 @@ let load_natives vm =
         basic "Star.Void" NVoid;
         {
             m_name = "Star.Native";
-            m_params = None;
+            m_params = [];
             m_types = Type.Table.create();
             m_sels = [];
             m_consts = [];
@@ -35,7 +35,7 @@ let load_natives vm =
         basic "Star.Native.UInt64" NUInt64;
         {
             m_name = "Star.Native.Ptr";
-            m_params = Some [1];
+            m_params = [1];
             m_types = Hashtbl.Poly.of_alist_exn [1, Type.TImport {name = "Star.Void"; circular = None}];
             m_sels = [];
             m_consts = [];
