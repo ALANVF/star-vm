@@ -1,5 +1,5 @@
 open Base
-open Stdint
+open Util.BetterStdint
 open Types
 
 [@@@warning "-30"]
@@ -11,24 +11,23 @@ type tvalue = {
 
 and kvalue =
     | VClass of class_value
-    | VValueKind of value_kind_value
+    | VValueKind of uint8
+    | VMultiValueKind of uint64
     | VTaggedKind of tagged_kind_value
+    | VMultiTaggedKind of multi_tagged_kind_value
     | VNative of native_value
     | VMasked of tvalue
 
-
 and class_value = tvalue Option_array.t
 
-and value_kind_value = {
-    tag: int;
-    value: tvalue
-}
-
 and tagged_kind_value = {
-    tag: int;
+    tag: uint8;
     values: tvalue list;
     members: tvalue Option_array.t
 }
+
+(* Behavior for tagged multi kinds with members does not currently exist *)
+and multi_tagged_kind_value = (uint8, tvalue list) Hashtbl.t
 
 and native_value =
     | VBool of bool
@@ -41,7 +40,6 @@ and native_value =
     | VInt64 of int64
     | VUInt64 of uint64
     | VPtr of tvalue Option_array.t
-    (*| VFunc of (tvalue list -> tvalue option)*)
     | VOpaque of Caml.Obj.t
 
 
