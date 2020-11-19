@@ -2,6 +2,7 @@ open Base
 open Base.Either.Export
 open Types
 open Index
+open Util
 
 type t = {
     mutable modules: (string, Module.t list) Hashtbl.t
@@ -107,13 +108,21 @@ module Checks = struct
                             | Some rl' -> loop (rl' :: acc) tpl'
                             | None -> None
                     in
+                    let map_parents =
+                        loop [] >> Option.map ~f: (function
+                            | [] -> `IsSame
+                            | res -> `IsDerivedParam res)
+                    in
                     match match_types ~strict: false vm this ~targets: params ~parents: params' with
-                    | Some param_results -> begin
-                        match loop [] parents with
-                        | Some [] -> `IsParametric(`IsSame, param_results)
-                        | Some parent_results -> `IsParametric(`IsDerivedParam parent_results, param_results)
-                        | None -> `Failed
-                    end
+                    | Some [] ->
+                        parents
+                        |> map_parents
+                        |> Option.value ~default: `Failed
+                    | Some param_results ->
+                        parents
+                        |> map_parents
+                        |> Option.map ~f: (fun f -> `IsParametric(f, param_results))
+                        |> Option.value ~default: `Failed
                     | None -> `Failed
             end
             
@@ -300,4 +309,7 @@ module Checks = struct
 
             | _, _ -> `Failed
         end
+    
+    (*let get_better_match m1 m2 =
+        match m1 with*)
 end
