@@ -23,10 +23,9 @@ module Checks: sig
     type tmatch_type = [
         | `IsExact
         | `IsSame
-        | `IsDerivedParent of (type_index * tmatch_type) list
         | `IsParent of (type_index * tmatch_type) list
-        | `IsDerived of tmatch_type list
-        | `IsDerivedParam of tmatch_type list list
+        | `IsDerived of (type_index * tmatch_type) list
+        | `IsComplexParam of tmatch_type list list
         | `IsParametric of tmatch_type * tmatch_type list
         | `IsErased
     ]
