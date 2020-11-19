@@ -10,7 +10,13 @@ let load_natives vm =
             m_types = Type.Table.create();
             m_sels = [];
             m_consts = [];
-            m_type = KNative repr
+            m_type = KNative {
+                n_kind = repr;
+                t_static_methods = Hashtbl.Poly.create();
+                t_methods = Hashtbl.Poly.create();
+                t_casts = Hashtbl.Poly.create();
+                t_operators = Hashtbl.Poly.create()
+            }
         }
     in
 
@@ -39,7 +45,13 @@ let load_natives vm =
             m_types = Hashtbl.Poly.of_alist_exn [1, Type.TImport {name = "Star.Void"; circular = None}];
             m_sels = [];
             m_consts = [];
-            m_type = KNative (NPtr 1)
+            m_type = KNative {
+                n_kind = NPtr 1;
+                t_static_methods = Hashtbl.Poly.create();
+                t_methods = Hashtbl.Poly.create();
+                t_casts = Hashtbl.Poly.create();
+                t_operators = Hashtbl.Poly.create()
+            }
         };
         basic "Star.Native.Opaque" NOpaque
     ] in

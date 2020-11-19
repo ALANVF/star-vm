@@ -275,7 +275,7 @@ module Checks = struct
                 | None -> `Failed
             end
 
-            | KNative na, KNative na' -> begin
+            | KNative {n_kind=nk; _}, KNative {n_kind=nk'; _} -> begin
                 let match_ptrs i i' = (* TODO: respect void pointers here *)
                     let e = get_simplified_type vm target i in
                     let e' = get_simplified_type vm parent i' in
@@ -286,7 +286,7 @@ module Checks = struct
 
                 match g, g' with
                 | [], [] -> begin
-                    match na, na' with
+                    match nk, nk' with
                     | NVoid, NVoid
                     | NBool, NBool
                     | NInt8, NInt8
@@ -302,7 +302,7 @@ module Checks = struct
                     | _, _ -> `Failed
                 end
                 | _, _ ->
-                    match na, na' with
+                    match nk, nk' with
                     | NPtr i, NPtr i' -> match_ptrs i i'
                     | _, _ -> `Failed
             end

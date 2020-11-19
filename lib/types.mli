@@ -162,7 +162,7 @@ and TaggedKind: sig
 end
 
 and Native: sig
-    type t =
+    type k =
         | NVoid
         | NBool
         | NInt8
@@ -174,8 +174,18 @@ and Native: sig
         | NInt64
         | NUInt64
         | NPtr of type_index
-        (*| NFunc of {params: type_index list; return: type_index}*)
         | NOpaque
+    
+    type t = {
+        n_kind: k;
+
+        mutable t_static_methods: Methods.tmethod_table;
+        mutable t_methods: Methods.tmethod_table;
+        
+        mutable t_casts: Methods.tcast_table;
+
+        mutable t_operators: Methods.toperator_table
+    }
 end
 
 and Methods: sig
