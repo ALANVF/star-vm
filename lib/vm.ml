@@ -93,7 +93,7 @@ module Checks = struct
                 | _, [] -> begin
                     match match_parents ~strict: false vm this ~target ~parents: parents' with
                     | Some [] -> `IsSame
-                    | Some parent_results -> `IsDerived (List.zip_exn parents' parent_results)
+                    | Some parent_results -> `IsParent (List.zip_exn parents' parent_results)
                     | None -> `Failed
                 end
                 | [], _ -> `Failed
@@ -129,7 +129,7 @@ module Checks = struct
                 match m_params, params with
                 | _, [] -> begin
                     match match_parents ~strict: false vm this ~target: target' ~parents with
-                    | Some parent_results -> `IsDerived (List.zip_exn parents parent_results)
+                    | Some parent_results -> `IsParent (List.zip_exn parents parent_results)
                     | None -> `Failed
                 end
                 | [], _ -> `Failed
@@ -230,7 +230,7 @@ module Checks = struct
             | KClass _, KClass _ when strict -> match_params `IsExact
             | KClass {t_parents=pl; _}, (KClass _ | KProtocol _) -> begin
                 match match_some_parents (TModule parent) pl with
-                | Some results -> `IsDerived results
+                | Some results -> `IsParent results
                 | None -> `Failed
             end
 
@@ -246,7 +246,7 @@ module Checks = struct
             | KProtocol {t_parents=[]; _}, KProtocol _ -> match_params `IsExact
             | KProtocol {t_parents=pl; _}, KProtocol _ -> begin
                 match match_some_parents (TModule parent) pl with
-                | Some results -> `IsDerived results
+                | Some results -> `IsParent results
                 | None -> `Failed
             end
 
@@ -265,12 +265,12 @@ module Checks = struct
             | KTaggedKind _, KTaggedKind {t_parents=[]; _} -> match_params `IsExact
             | KTaggedKind _, KTaggedKind {t_parents=pl; _} -> begin
                 match match_some_parents (TModule target) pl with
-                | Some results -> `IsParent results
+                | Some results -> `IsDerived results
                 | None -> `Failed
             end
             | KTaggedKind {t_parents=pl; _}, KProtocol _ -> begin
                 match match_some_parents (TModule parent) pl with
-                | Some results -> `IsDerived results
+                | Some results -> `IsParent results
                 | None -> `Failed
             end
 
@@ -308,4 +308,41 @@ module Checks = struct
 
             | _, _ -> `Failed
         end
+    
+    let get_better_match m1 m2 =
+        let rec is_exact (inner, params) =
+            if inner != `IsExact then
+                false
+            else
+                let check = function
+                    | `IsExact -> true
+                    | `IsParametric p -> is_exact p
+                    | _ -> false
+                in
+                params
+                |> List.for_all ~f: check
+        in
+        let indeterminable () = failwith "Indeterminable!" in
+        match m1, m2 with
+        | `IsExact, `IsExact
+        | `IsSame, `IsSame
+        | `IsErased, `IsErased -> indeterminable()
+        
+        | `IsExact, `IsParametric p when is_exact p -> indeterminable()
+        | `IsExact, _ -> `Left m1
+        
+        | `IsSame, (`IsExact | `IsParametric(`IsExact, _)) -> `Right m2
+        | `IsSame, `IsParametric(`IsSame, _) -> indeterminable()
+        | `IsSame, _ -> `Left m1
+
+        | `IsParent _, `IsParent _ -> todo()
+
+        | `IsDerived _, `IsDerived _ -> todo()
+
+        | `IsComplexParam _, `IsComplexParam _ -> todo()
+
+        | `IsErased, _ -> `Right m2
+
+        | _, `IsErased -> `Left m1
+        | _, _ -> todo()
 end

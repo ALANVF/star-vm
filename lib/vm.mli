@@ -42,6 +42,8 @@ module Checks: sig
 
     val match_module: ?strict: bool -> t -> Module.t -> target: Module.t -> parent: Module.t -> tmatch_type_result
 
+    val get_better_match: tmatch_type -> tmatch_type -> [ `Left of tmatch_type | `Right of tmatch_type ]
+
     (*val compare_match: tmatch_type -> tmatch_type -> int*)
 
     (*val get_best_matches: ('t * tmatch_type) list -> ('t * tmatch_type) list*)

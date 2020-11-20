@@ -4,6 +4,10 @@ val (>>): ('a -> 'b) -> ('b -> 'c) -> 'a -> 'c
 
 val (<|): ('a -> 'b) -> 'a -> 'b
 
+val (==): 'a -> 'a -> bool
+
+val (!=): 'a -> 'a -> bool
+
 
 (* A large amount of this is taken from Stdint *)
 module BetterStdint: sig

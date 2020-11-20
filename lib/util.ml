@@ -4,6 +4,10 @@ let (>>) f g = Base.Fn.compose g f [@@inline always]
 
 let (<|) = (@@)
 
+let (==) = Base.phys_equal
+
+let (!=) a b = not (a == b) [@@inline always]
+
 
 (* A large amount of this is taken from Stdint *)
 module BetterStdint = struct
