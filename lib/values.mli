@@ -39,7 +39,10 @@ and native_value =
     | VUInt32 of uint32
     | VInt64 of int64
     | VUInt64 of uint64
-    | VPtr of tvalue Option_array.t
+    | VInt128 of int128
+    | VUInt128 of uint128
+    | VDec of float
+    | VPtr of int * tvalue Option_array.t
     | VOpaque of Caml.Obj.t
 
 

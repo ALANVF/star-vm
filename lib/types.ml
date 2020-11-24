@@ -317,6 +317,9 @@ and Native: sig
         | NUInt32
         | NInt64
         | NUInt64
+        | NInt128
+        | NUInt128
+        | NDec
         | NPtr of type_index
         | NOpaque
     
@@ -342,6 +345,9 @@ end = struct
         | NUInt32
         | NInt64
         | NUInt64
+        | NInt128
+        | NUInt128
+        | NDec
         | NPtr of type_index
         | NOpaque
     
@@ -382,15 +388,15 @@ and Methods: sig
 
 
     and tany_method =
-        | AMDefaultInit of tmethod_body
-        | AMStaticInit of tmethod_body
-        | AMInit of tdefault_method
-        | AMStatic of tdefault_method
-        | AMInstance of tdefault_method
-        | AMCast of tmethod_cast
-        | AMOperator of tmethod_op
-        | AMDeinit of tmethod_body
-        | AMStaticDeinit of tmethod_body
+        | MDefaultInit of tmethod_body
+        | MStaticInit of tmethod_body
+        | MInit of tdefault_method
+        | MStatic of tdefault_method
+        | MInstance of tdefault_method
+        | MCast of tmethod_cast
+        | MOperator of tmethod_op
+        | MDeinit of tmethod_body
+        | MStaticDeinit of tmethod_body
 
     
     and tdefault_method = {
@@ -494,15 +500,15 @@ end = struct
 
 
     and tany_method =
-        | AMDefaultInit of tmethod_body
-        | AMStaticInit of tmethod_body
-        | AMInit of tdefault_method
-        | AMStatic of tdefault_method
-        | AMInstance of tdefault_method
-        | AMCast of tmethod_cast
-        | AMOperator of tmethod_op
-        | AMDeinit of tmethod_body
-        | AMStaticDeinit of tmethod_body
+        | MDefaultInit of tmethod_body
+        | MStaticInit of tmethod_body
+        | MInit of tdefault_method
+        | MStatic of tdefault_method
+        | MInstance of tdefault_method
+        | MCast of tmethod_cast
+        | MOperator of tmethod_op
+        | MDeinit of tmethod_body
+        | MStaticDeinit of tmethod_body
 
     
     and tdefault_method = {
