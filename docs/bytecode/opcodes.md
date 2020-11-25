@@ -85,9 +85,20 @@ Swaps the last 2 values on the stack. This will fail if the stack has less than 
 
 
 ### pin
+```
+pin
+```
+
+Pins the last value onto the stack. This means that any operations that would usually remove
+it from the stack do not actually remove it. This is particularly helpful for cascades.
 
 
 ### unpin
+```
+unpin
+```
+
+Unpins the last value from the stack.
 
 
 ### add
