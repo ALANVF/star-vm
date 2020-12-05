@@ -22,6 +22,11 @@ Does not have an effect on constants or uncounted values.
 
 
 ### deinit
+```
+deinit
+```
+
+Calls the deinitializer of a value.
 
 
 ### push
@@ -306,7 +311,9 @@ Decreases the value of a register.
 consecutive (all | any | one | none) @<sec-1>, @<sec-2>, ...
 ```
 
-TODO
+Emulates the behavior of short-circuiting operators.
+
+TODO: more docs here
 
 
 ### give
@@ -347,10 +354,16 @@ Executes a code section depending on a condition.
 sec_table @<sec-1>, ...
 ```
 
-Switch case thing.
+Switch/case thing.
 
 
 ### sec_jtable
+```
+sec_jtable @<sec-1>, ...
+sec_jtable @<sec-1>, ..., else @<default-sec>
+```
+
+Jump-table thing
 
 
 ### sec_ltable
@@ -359,7 +372,7 @@ sec_ltable @<case-1> => @<dest-1>, ...
 sec_ltable @<case-1> => @<dest-1>, ..., else @<default-dest>
 ```
 
-Switch case thing.
+Switch/case thing.
 
 
 ### csec
@@ -474,6 +487,13 @@ Terminator: multi-section terminator
 
 
 ### init
+```
+init %<type>, #<sel>
+```
+
+Creates an instance of `type`.
+
+The arity of the call is determined by the selector.
 
 
 ### send
@@ -489,6 +509,15 @@ The arity of the call is determined by the selector.
 
 
 ### super
+```
+super %<type>, #<sel>
+super %<type>
+```
+
+1) Sends message `sel` to superclass `type`
+2) Resends the current message to superclass `type`
+
+The arity of the call is determined by the selector.
 
 
 ### cast
@@ -508,6 +537,13 @@ Determines if a value is an instance of type `type`.
 
 
 ### kind
+```
+kind %<type>, <index>
+```
+
+Creates an instance of a kind value.
+
+The arity of the opcode is determined by the index.
 
 
 ### kind_id
