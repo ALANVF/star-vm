@@ -16,13 +16,31 @@ module Flow: sig
     exception Unreachable
 end
 
+module VStack: sig
+    type t
+
+    val create: unit -> t
+    val push: tvalue -> t -> unit
+    val push_all: tvalue list -> t -> unit
+    val pop: t -> tvalue
+    val pop_n: int -> t -> tvalue list
+    val remove: t -> unit
+    val remove_n: int -> t -> unit
+    val clear: t -> unit
+    val pin: t -> unit
+    val unpin: t -> unit
+    val swap: t -> unit
+    val is_empty: t -> bool
+end
+
 
 type context = {
     vm: Vm.t;
     this: Module.t;
     routine: tany_method;
     caller: tvalue option;
-    regs: tvalue ref Option_array.t;
+    regs: tvalue Uniform_array.t;
+    vstack: VStack.t
 }
 
 

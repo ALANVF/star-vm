@@ -18,12 +18,12 @@ and kvalue =
     | VNative of native_value
     | VMasked of tvalue
 
-and class_value = tvalue Option_array.t
+and class_value = tvalue Uniform_array.t
 
 and tagged_kind_value = {
     tag: uint8;
     values: tvalue list;
-    members: tvalue Option_array.t
+    members: tvalue Uniform_array.t
 }
 
 (* Behavior for tagged multi kinds with members does not currently exist *)
@@ -42,7 +42,7 @@ and native_value =
     | VInt128 of int128
     | VUInt128 of uint128
     | VDec of float
-    | VPtr of int * tvalue Option_array.t
+    | VPtr of int * tvalue Uniform_array.t
     | VOpaque of Caml.Obj.t
 
 
