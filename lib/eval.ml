@@ -118,7 +118,7 @@ end
 type context = {
     vm: Vm.t;
     this: Module.t;
-    routine: tany_method;
+    routine: base_method;
     caller: tvalue option;
     regs: tvalue Uniform_array.t;
     vstack: VStack.t
@@ -126,17 +126,7 @@ type context = {
 
 
 let create_eval_context vm this routine caller args =
-    let {b_registers = regs_spec; _} =
-        match routine with
-        | MDefaultInit b
-        | MStaticInit b
-        | MDeinit b
-        | MStaticDeinit b -> b
-        | MInit {dm_body; _}
-        | MStatic {dm_body; _}
-        | MInstance {dm_body; _} -> dm_body
-        | MCast {mc_body; _} -> mc_body
-        | MOperator {mo_body; _} -> mo_body
+    let regs_spec = routine#registers
     in
 
     let regs = Uniform_array.unsafe_create_uninitialized ~len: (List.length regs_spec) in

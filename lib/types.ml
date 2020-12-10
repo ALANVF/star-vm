@@ -106,35 +106,35 @@ and Class: sig
         mutable t_static_members: tmember list;
         mutable t_members: tmember list;
 
-        mutable t_default_init: Methods.tmethod_body option;
-        mutable t_static_init: Methods.tmethod_body option;
+        mutable t_default_init: Methods.base_method option;
+        mutable t_static_init: Methods.base_method option;
         
-        mutable t_inits: Methods.tmethod_table;
+        mutable t_inits: Methods.method_table;
         
-        mutable t_static_methods: Methods.tmethod_table;
-        mutable t_methods: Methods.tmethod_table;
+        mutable t_static_methods: Methods.method_table;
+        mutable t_methods: Methods.method_table;
         
-        mutable t_casts: Methods.tcast_table;
+        mutable t_casts: Methods.cast_table;
 
-        mutable t_operators: Methods.toperator_table;
+        mutable t_operators: Methods.operator_table;
 
-        mutable t_deinit: Methods.tmethod_body option;
-        mutable t_static_deinit: Methods.tmethod_body option
+        mutable t_deinit: Methods.base_method option;
+        mutable t_static_deinit: Methods.base_method option
     }
 
     val create:
         ?parents: type_index list ->
         ?static_members: tmember list ->
         ?members: tmember list ->
-        ?default_init: Methods.tmethod_body option ->
-        ?static_init: Methods.tmethod_body option ->
-        ?inits: Methods.tmethod_table ->
-        ?static_methods: Methods.tmethod_table ->
-        ?methods: Methods.tmethod_table ->
-        ?casts: Methods.tcast_table ->
-        ?operators: Methods.toperator_table ->
-        ?deinit: Methods.tmethod_body option ->
-        ?static_deinit: Methods.tmethod_body option ->
+        ?default_init: Methods.base_method option ->
+        ?static_init: Methods.base_method option ->
+        ?inits: Methods.method_table ->
+        ?static_methods: Methods.method_table ->
+        ?methods: Methods.method_table ->
+        ?casts: Methods.cast_table ->
+        ?operators: Methods.operator_table ->
+        ?deinit: Methods.base_method option ->
+        ?static_deinit: Methods.base_method option ->
         unit -> t
 end = struct
     type t = {
@@ -143,20 +143,20 @@ end = struct
         mutable t_static_members: tmember list;
         mutable t_members: tmember list;
     
-        mutable t_default_init: Methods.tmethod_body option;
-        mutable t_static_init: Methods.tmethod_body option;
+        mutable t_default_init: Methods.base_method option;
+        mutable t_static_init: Methods.base_method option;
         
-        mutable t_inits: Methods.tmethod_table;
+        mutable t_inits: Methods.method_table;
         
-        mutable t_static_methods: Methods.tmethod_table;
-        mutable t_methods: Methods.tmethod_table;
+        mutable t_static_methods: Methods.method_table;
+        mutable t_methods: Methods.method_table;
         
-        mutable t_casts: Methods.tcast_table;
+        mutable t_casts: Methods.cast_table;
     
-        mutable t_operators: Methods.toperator_table;
+        mutable t_operators: Methods.operator_table;
     
-        mutable t_deinit: Methods.tmethod_body option;
-        mutable t_static_deinit: Methods.tmethod_body option
+        mutable t_deinit: Methods.base_method option;
+        mutable t_static_deinit: Methods.base_method option
     }
 
     let create
@@ -169,7 +169,7 @@ end = struct
         ?(static_methods = Hashtbl.Poly.create())
         ?(methods = Hashtbl.Poly.create())
         ?(casts = Hashtbl.Poly.create())
-        ?(operators = Hashtbl.Poly.create())
+        ?(operators = Methods.{o_unary = Hashtbl.Poly.create(); o_binary = Hashtbl.Poly.create()})
         ?(deinit = None)
         ?(static_deinit = None)
     () =
@@ -196,12 +196,12 @@ and Protocol: sig
         mutable t_static_members: tmember list;
         mutable t_members: tmember list;
         
-        mutable t_static_methods: Methods.tmethod_table;
-        mutable t_methods: Methods.tmethod_table;
+        mutable t_static_methods: Methods.method_table;
+        mutable t_methods: Methods.method_table;
         
-        mutable t_casts: Methods.tcast_table;
+        mutable t_casts: Methods.cast_table;
 
-        mutable t_operators: Methods.toperator_table
+        mutable t_operators: Methods.operator_table
     }
 end = struct
     type t = {
@@ -210,12 +210,12 @@ end = struct
         mutable t_static_members: tmember list;
         mutable t_members: tmember list;
         
-        mutable t_static_methods: Methods.tmethod_table;
-        mutable t_methods: Methods.tmethod_table;
+        mutable t_static_methods: Methods.method_table;
+        mutable t_methods: Methods.method_table;
         
-        mutable t_casts: Methods.tcast_table;
+        mutable t_casts: Methods.cast_table;
 
-        mutable t_operators: Methods.toperator_table
+        mutable t_operators: Methods.operator_table
     }
 end
 
@@ -229,12 +229,12 @@ and ValueKind: sig
         vk_repr: type_index;
         mutable vk_cases: case list;
 
-        mutable t_static_methods: Methods.tmethod_table;
-        mutable t_methods: Methods.tmethod_table;
+        mutable t_static_methods: Methods.method_table;
+        mutable t_methods: Methods.method_table;
         
-        mutable t_casts: Methods.tcast_table;
+        mutable t_casts: Methods.cast_table;
 
-        mutable t_operators: Methods.toperator_table
+        mutable t_operators: Methods.operator_table
     }
 end = struct
     type case =
@@ -246,12 +246,12 @@ end = struct
         vk_repr: type_index;
         mutable vk_cases: case list;
 
-        mutable t_static_methods: Methods.tmethod_table;
-        mutable t_methods: Methods.tmethod_table;
+        mutable t_static_methods: Methods.method_table;
+        mutable t_methods: Methods.method_table;
         
-        mutable t_casts: Methods.tcast_table;
+        mutable t_casts: Methods.cast_table;
 
-        mutable t_operators: Methods.toperator_table
+        mutable t_operators: Methods.operator_table
     }
 end
 
@@ -270,14 +270,14 @@ and TaggedKind: sig
         mutable t_static_members: tmember list;
         mutable t_members: tmember list;
 
-        mutable t_default_init: Methods.tmethod_body option;
+        mutable t_default_init: Methods.base_method option;
         
-        mutable t_static_methods: Methods.tmethod_table;
-        mutable t_methods: Methods.tmethod_table;
+        mutable t_static_methods: Methods.method_table;
+        mutable t_methods: Methods.method_table;
         
-        mutable t_casts: Methods.tcast_table;
+        mutable t_casts: Methods.cast_table;
 
-        mutable t_operators: Methods.toperator_table
+        mutable t_operators: Methods.operator_table
     }
 end = struct
     type case = {
@@ -294,14 +294,14 @@ end = struct
         mutable t_static_members: tmember list;
         mutable t_members: tmember list;
 
-        mutable t_default_init: Methods.tmethod_body option;
+        mutable t_default_init: Methods.base_method option;
         
-        mutable t_static_methods: Methods.tmethod_table;
-        mutable t_methods: Methods.tmethod_table;
+        mutable t_static_methods: Methods.method_table;
+        mutable t_methods: Methods.method_table;
         
-        mutable t_casts: Methods.tcast_table;
+        mutable t_casts: Methods.cast_table;
 
-        mutable t_operators: Methods.toperator_table
+        mutable t_operators: Methods.operator_table
     }
 end
 
@@ -326,12 +326,12 @@ and Native: sig
     type t = {
         n_kind: k;
 
-        mutable t_static_methods: Methods.tmethod_table;
-        mutable t_methods: Methods.tmethod_table;
+        mutable t_static_methods: Methods.method_table;
+        mutable t_methods: Methods.method_table;
         
-        mutable t_casts: Methods.tcast_table;
+        mutable t_casts: Methods.cast_table;
 
-        mutable t_operators: Methods.toperator_table
+        mutable t_operators: Methods.operator_table
     }
 end = struct
     type k =
@@ -354,237 +354,228 @@ end = struct
     type t = {
         n_kind: k;
 
-        mutable t_static_methods: Methods.tmethod_table;
-        mutable t_methods: Methods.tmethod_table;
+        mutable t_static_methods: Methods.method_table;
+        mutable t_methods: Methods.method_table;
         
-        mutable t_casts: Methods.tcast_table;
+        mutable t_casts: Methods.cast_table;
 
-        mutable t_operators: Methods.toperator_table
+        mutable t_operators: Methods.operator_table
     }
 end
 
 and Methods: sig
-    type kdispatch = [
-        | `Normal
-        | `Generic of Type.Table.t
-    ]
+    type method_attrs = {
+        is_hidden: bool
+    }
 
-    type tdispatch = [
-        | `Single of kdispatch
-        | `Multi of kdispatch list
-    ]
-
-
-    type tsection = {
+    type section = {
         s_index: section_index;
         mutable s_opcodes: Opcode.t list
     }
 
+    type dispatch_kind = [
+        | `Normal
+        | `Generic of Type.Table.t
+    ]
 
-    type tmethod_body = {
-        mutable b_registers: type_index list;
-        mutable b_sections: tsection list
-    }
+    type unary_op =
+        | UNeg
+        | UNot
+        | UCompl
+        | UTruthy
+    
+    type binary_op =
+        | BAdd
+        | BSub
+        | BMult
+        | BPow
+        | BDiv
+        | BIDiv
+        | BMod
+        | BIsMod
+        | BAnd
+        | BOr
+        | BXor
+        | BShl
+        | BShr
+        | BEq
+        | BNe
+        | BGt
+        | BGe
+        | BLt
+        | BLe
 
 
-    and tany_method =
-        | MDefaultInit of tmethod_body
-        | MStaticInit of tmethod_body
-        | MInit of tdefault_method
-        | MStatic of tdefault_method
-        | MInstance of tdefault_method
-        | MCast of tmethod_cast
-        | MOperator of tmethod_op
-        | MDeinit of tmethod_body
-        | MStaticDeinit of tmethod_body
+    class base_method:
+        attrs: method_attrs ->
+        registers: type_index list ->
+        sections: section list ->
+    object
+        method attrs: method_attrs
+        method registers: type_index list
+        method sections: section list
+    end
+
+    class tmethod:
+        attrs: method_attrs ->
+        registers: type_index list ->
+        sections: section list ->
+        sel: tsel ->
+        params: type_index list ->
+        return: type_index ->
+    object
+        inherit base_method
+        
+        method sel: tsel
+        method params: type_index list
+        method return: type_index
+    end
+
+    class cast_method:
+        attrs: method_attrs ->
+        registers: type_index list ->
+        sections: section list ->
+        kind: dispatch_kind ->
+        ret: type_index ->
+    object
+        inherit base_method
+        
+        method kind: dispatch_kind
+        method ret: type_index
+    end
+
+    class unary_op_method:
+        attrs: method_attrs ->
+        registers: type_index list ->
+        sections: section list ->
+        op: unary_op ->
+        ret: type_index ->
+    object
+        inherit base_method
+        
+        method op: unary_op
+        method ret: type_index
+    end
+
+    class binary_op_method:
+        attrs: method_attrs ->
+        registers: type_index list ->
+        sections: section list ->
+        op: binary_op ->
+        ret: type_index ->
+    object
+        inherit base_method
+        
+        method op: binary_op
+        method ret: type_index
+    end
 
     
-    and tdefault_method = {
-        dm_sel: tsel;
-        dm_kind: kdefault_method;
-        dm_return: type_index;
-        dm_body: tmethod_body
+    type 't dispatch = [
+        | `Single of dispatch_kind * 't
+        | `Multi of (dispatch_kind * 't) list
+    ] constraint 't = #base_method
+
+
+    type method_table = (sel_index, tmethod dispatch) Hashtbl.t
+
+    type cast_table = (type_index, cast_method dispatch) Hashtbl.t
+
+    type operator_table = {
+        o_unary: (unary_op, unary_op_method) Hashtbl.t;
+        o_binary: (binary_op, binary_op_method dispatch) Hashtbl.t
     }
-
-    and kdefault_method =
-        | DMEmpty
-        | DMMulti of {params: type_index list; dispatch: tdispatch}
-
-    
-    and tmethod_cast = {
-        mc_kind: kdispatch;
-        mc_type: type_index;
-        mc_body: tmethod_body
-    }
-
-    
-    and tmethod_op = {
-        mo_kind: kmethod_op;
-        mo_body: tmethod_body
-    }
-
-    and kmethod_op =
-        | MOUnary
-        | MOBinary of {param: type_index; dispatch: tdispatch}
-
-    and kmethod_op_opcode =
-        | MOONeg
-        | MOONot
-        | MOOCompl
-        | MOOTruthy
-        | MOOAdd
-        | MOOSub
-        | MOOMult
-        | MOOPow
-        | MOODiv
-        | MOOIDiv
-        | MOOMod
-        | MOOIsMod
-        | MOOAnd
-        | MOOOr
-        | MOOXor
-        | MOOShl
-        | MOOShr
-        | MOOEq
-        | MOONe
-        | MOOGt
-        | MOOGe
-        | MOOLt
-        | MOOLe
-
-    
-    type tmethod_attrs = {
-        is_hidden: bool;
-        is_no_inherit: bool;
-        is_native: string option
-    }
-
-    type 't tmethod_of = {
-        mt_attrs: tmethod_attrs;
-        mt_method: 't
-    }
-
-    type tmethod = tdefault_method tmethod_of
-
-    type tcast = tmethod_cast tmethod_of
-
-    type toperator = tmethod_op tmethod_of
-    
-    type tmethod_table = (sel_index, tmethod) Hashtbl.t
-
-    type tcast_table = (type_index, tcast) Hashtbl.t
-
-    type toperator_table = (kmethod_op_opcode, toperator) Hashtbl.t
 end = struct
-    type kdispatch = [
-        | `Normal
-        | `Generic of Type.Table.t
-    ]
+    type method_attrs = {
+        is_hidden: bool
+    }
 
-    type tdispatch = [
-        | `Single of kdispatch
-        | `Multi of kdispatch list
-    ]
-
-
-    type tsection = {
+    type section = {
         s_index: section_index;
         mutable s_opcodes: Opcode.t list
     }
 
+    type dispatch_kind = [
+        | `Normal
+        | `Generic of Type.Table.t
+    ]
 
-    type tmethod_body = {
-        mutable b_registers: type_index list;
-        mutable b_sections: tsection list
-    }
-
-
-    and tany_method =
-        | MDefaultInit of tmethod_body
-        | MStaticInit of tmethod_body
-        | MInit of tdefault_method
-        | MStatic of tdefault_method
-        | MInstance of tdefault_method
-        | MCast of tmethod_cast
-        | MOperator of tmethod_op
-        | MDeinit of tmethod_body
-        | MStaticDeinit of tmethod_body
-
+    type unary_op =
+        | UNeg
+        | UNot
+        | UCompl
+        | UTruthy
     
-    and tdefault_method = {
-        dm_sel: tsel;
-        dm_kind: kdefault_method;
-        dm_return: type_index;
-        dm_body: tmethod_body
+    type binary_op =
+        | BAdd
+        | BSub
+        | BMult
+        | BPow
+        | BDiv
+        | BIDiv
+        | BMod
+        | BIsMod
+        | BAnd
+        | BOr
+        | BXor
+        | BShl
+        | BShr
+        | BEq
+        | BNe
+        | BGt
+        | BGe
+        | BLt
+        | BLe
+
+
+    class base_method ~attrs ~registers ~sections = object
+        method attrs: method_attrs = attrs
+        method registers: type_index list = registers
+        method sections: section list = sections
+    end
+
+    class tmethod ~attrs ~registers ~sections ~sel ~params ~return = object
+        inherit base_method ~attrs ~registers ~sections
+
+        method sel: tsel = sel
+        method params: type_index list = params
+        method return: type_index = return
+    end
+
+    class cast_method ~attrs ~registers ~sections ~kind ~ret = object
+        inherit base_method ~attrs ~registers ~sections
+        
+        method kind: dispatch_kind = kind
+        method ret: type_index = ret
+    end
+
+    class unary_op_method ~attrs ~registers ~sections ~op ~ret = object
+        inherit base_method ~attrs ~registers ~sections
+        
+        method op: unary_op = op
+        method ret: type_index = ret
+    end
+
+    class binary_op_method ~attrs ~registers ~sections ~op ~ret = object
+        inherit base_method ~attrs ~registers ~sections
+        
+        method op: binary_op = op
+        method ret: type_index = ret
+    end
+
+
+    type 't dispatch = [
+        | `Single of dispatch_kind * 't
+        | `Multi of (dispatch_kind * 't) list
+    ] constraint 't = #base_method
+
+
+    type method_table = (sel_index, tmethod dispatch) Hashtbl.t
+
+    type cast_table = (type_index, cast_method dispatch) Hashtbl.t
+
+    type operator_table = {
+        o_unary: (unary_op, unary_op_method) Hashtbl.t;
+        o_binary: (binary_op, binary_op_method dispatch) Hashtbl.t
     }
-
-    and kdefault_method =
-        | DMEmpty
-        | DMMulti of {params: type_index list; dispatch: tdispatch}
-
-    
-    and tmethod_cast = {
-        mc_kind: kdispatch;
-        mc_type: type_index;
-        mc_body: tmethod_body
-    }
-
-    
-    and tmethod_op = {
-        mo_kind: kmethod_op;
-        mo_body: tmethod_body
-    }
-
-    and kmethod_op =
-        | MOUnary
-        | MOBinary of {param: type_index; dispatch: tdispatch}
-
-    and kmethod_op_opcode =
-        | MOONeg
-        | MOONot
-        | MOOCompl
-        | MOOTruthy
-        | MOOAdd
-        | MOOSub
-        | MOOMult
-        | MOOPow
-        | MOODiv
-        | MOOIDiv
-        | MOOMod
-        | MOOIsMod
-        | MOOAnd
-        | MOOOr
-        | MOOXor
-        | MOOShl
-        | MOOShr
-        | MOOEq
-        | MOONe
-        | MOOGt
-        | MOOGe
-        | MOOLt
-        | MOOLe
-
-    
-    type tmethod_attrs = {
-        is_hidden: bool;
-        is_no_inherit: bool;
-        is_native: string option
-    }
-
-    type 't tmethod_of = {
-        mt_attrs: tmethod_attrs;
-        mt_method: 't
-    }
-
-    type tmethod = tdefault_method tmethod_of
-
-    type tcast = tmethod_cast tmethod_of
-
-    type toperator = tmethod_op tmethod_of
-    
-    type tmethod_table = (sel_index, tmethod) Hashtbl.t
-
-    type tcast_table = (type_index, tcast) Hashtbl.t
-
-    type toperator_table = (kmethod_op_opcode, toperator) Hashtbl.t
 end

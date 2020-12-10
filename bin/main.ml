@@ -15,11 +15,14 @@ let load_natives vm =
                 t_static_methods = Hashtbl.Poly.create();
                 t_methods = Hashtbl.Poly.create();
                 t_casts = Hashtbl.Poly.create();
-                t_operators = Hashtbl.Poly.create()
+                t_operators = {
+                    o_unary = Hashtbl.Poly.create();
+                    o_binary = Hashtbl.Poly.create()
+                }
             }
         }
     in
-
+    
     let modules = Module.[
         basic "Star.Void" NVoid;
         {
@@ -50,7 +53,10 @@ let load_natives vm =
                 t_static_methods = Hashtbl.Poly.create();
                 t_methods = Hashtbl.Poly.create();
                 t_casts = Hashtbl.Poly.create();
-                t_operators = Hashtbl.Poly.create()
+                t_operators = {
+                    o_unary = Hashtbl.Poly.create();
+                    o_binary = Hashtbl.Poly.create()
+                }
             }
         };
         basic "Star.Native.Opaque" NOpaque

@@ -37,11 +37,11 @@ end
 type context = {
     vm: Vm.t;
     this: Module.t;
-    routine: tany_method;
+    routine: base_method;
     caller: tvalue option;
     regs: tvalue Uniform_array.t;
     vstack: VStack.t
 }
 
 
-val create_eval_context: Vm.t -> Module.t -> tany_method -> tvalue option -> tvalue list -> context
+val create_eval_context: Vm.t -> Module.t -> base_method -> tvalue option -> tvalue list -> context
