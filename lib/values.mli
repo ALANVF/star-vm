@@ -2,21 +2,14 @@ open Base
 open Util.BetterStdint
 open Types
 
-[@@@warning "-30"]
-
-type tvalue = {
-    t: Type.t;
-    kind: kvalue
-}
-
-and kvalue =
-    | VClass of class_value
-    | VValueKind of uint8
-    | VMultiValueKind of uint64
-    | VTaggedKind of tagged_kind_value
-    | VMultiTaggedKind of multi_tagged_kind_value
-    | VNative of native_value
-    | VMasked of tvalue
+type tvalue =
+    | VClass of tclass * class_value
+    | VValueKind of tvalue_kind * uint8
+    | VMultiValueKind of tvalue_kind * uint64
+    | VTaggedKind of ttagged_kind * tagged_kind_value
+    | VMultiTaggedKind of ttagged_kind * multi_tagged_kind_value
+    | VNative of tnative * native_value
+    | VMasked of tmodule * tvalue
 
 and class_value = tvalue Uniform_array.t
 
