@@ -4,35 +4,46 @@ open Starvm.Types
 
 let load_natives vm =
     let basic name repr =
-        Module.{
-            m_name = name;
-            m_params = [];
-            m_types = Type.Table.create();
-            m_sels = [];
-            m_consts = [];
-            m_type = KNative {
-                n_kind = repr;
-                t_static_methods = Hashtbl.Poly.create();
-                t_methods = Hashtbl.Poly.create();
-                t_casts = Hashtbl.Poly.create();
-                t_operators = {
-                    o_unary = Hashtbl.Poly.create();
-                    o_binary = Hashtbl.Poly.create()
-                }
-            }
-        }
+        ((new tnative
+            ~name: name
+            ~params: []
+            ~types: (Type.Table.create())
+            ~sels: []
+            ~consts: []
+            ~kind: repr
+            ~static_methods: (Hashtbl.Poly.create())
+            ~methods: (Hashtbl.Poly.create())
+            ~casts: (Hashtbl.Poly.create())
+            ~operators: {
+                o_unary = Hashtbl.Poly.create();
+                o_binary = Hashtbl.Poly.create()
+            }) :> tmodule)
     in
     
-    let modules = Module.[
+    let modules = [
         basic "Star.Void" NVoid;
-        {
-            m_name = "Star.Native";
-            m_params = [];
-            m_types = Type.Table.create();
-            m_sels = [];
-            m_consts = [];
-            m_type = KClass (Class.create())
-        };
+        ((new tclass
+            ~name: "Star.Native"
+            ~params: []
+            ~types: (Type.Table.create())
+            ~sels: []
+            ~consts: []
+            ~parents: []
+            ~static_members: []
+            ~members: []
+            ~default_init: None
+            ~static_init: None
+            ~inits: (Hashtbl.Poly.create())
+            ~static_methods: (Hashtbl.Poly.create())
+            ~methods: (Hashtbl.Poly.create())
+            ~casts: (Hashtbl.Poly.create())
+            ~operators: {
+                o_unary = Hashtbl.Poly.create();
+                o_binary = Hashtbl.Poly.create()
+            }
+            ~deinit: None
+            ~static_deinit: None) :> tmodule)
+        ;
         basic "Star.Native.Bool" NBool;
         basic "Star.Native.Int8" NInt8;
         basic "Star.Native.UInt8" NUInt8;
@@ -42,23 +53,21 @@ let load_natives vm =
         basic "Star.Native.UInt32" NUInt32;
         basic "Star.Native.Int64" NInt64;
         basic "Star.Native.UInt64" NUInt64;
-        {
-            m_name = "Star.Native.Ptr";
-            m_params = [1];
-            m_types = Hashtbl.Poly.of_alist_exn [1, Type.TImport {name = "Star.Void"; circular = None}];
-            m_sels = [];
-            m_consts = [];
-            m_type = KNative {
-                n_kind = NPtr 1;
-                t_static_methods = Hashtbl.Poly.create();
-                t_methods = Hashtbl.Poly.create();
-                t_casts = Hashtbl.Poly.create();
-                t_operators = {
-                    o_unary = Hashtbl.Poly.create();
-                    o_binary = Hashtbl.Poly.create()
-                }
-            }
-        };
+        ((new tnative
+            ~name: "Star.Native.Ptr"
+            ~params: [1]
+            ~types: (Hashtbl.Poly.of_alist_exn [1, Type.TImport {name = "Star.Void"; circular = None}])
+            ~sels: []
+            ~consts: []
+            ~kind: (NPtr 1)
+            ~static_methods: (Hashtbl.Poly.create())
+            ~methods: (Hashtbl.Poly.create())
+            ~casts: (Hashtbl.Poly.create())
+            ~operators: {
+                o_unary = Hashtbl.Poly.create();
+                o_binary = Hashtbl.Poly.create()
+            }) :> tmodule)
+        ;
         basic "Star.Native.Opaque" NOpaque
     ] in
     
@@ -72,5 +81,11 @@ let () =
     
     load_natives vm;
     
-    print_endline (Hashtbl.find_multi vm.modules "Star.Void" |> List.hd).m_name;
-    print_endline (Hashtbl.find_multi vm.modules "Star.Native" |> List.hd).m_name
+    print_endline (Hashtbl.find_multi vm.modules "Star.Void" |> List.hd)#name;
+    print_endline (Hashtbl.find_multi vm.modules "Star.Native" |> List.hd)#name;
+
+    let ptr = (Hashtbl.find_multi vm.modules "Star.Native.Ptr" |> List.hd) in
+    let ptr' = ptr#try_cast(To Native_t) in
+    match ptr' with
+    | Some ptr'' when (match ptr''#kind with NPtr _ -> true | _ -> false) -> print_endline "yay"
+    | _ -> print_endline "nope"

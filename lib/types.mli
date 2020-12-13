@@ -2,7 +2,6 @@ open Base
 open Index
 
 (* TODO:
- * - less redundancy
  * - change index types to something stronger
  *)
 
@@ -17,6 +16,23 @@ type tmember = {
     mb_getter: tsel option;
     mb_setter: tsel option
 }
+
+
+module Cast: sig
+    type 'a class_name = ..
+    constraint 'a = <cast: 'a. 'a name -> 'a; try_cast: 'a. 'a name -> 'a option; ..>
+
+    and 'a name =
+        To: 'a class_name -> (<cast: 'a. 'a name -> 'a; try_cast: 'a. 'a name -> 'a option; ..> as 'a) name
+    [@@unboxed]
+
+    exception Bad_cast
+
+    class type t = object
+        method cast: 'a. 'a name -> 'a
+        method try_cast: 'a. 'a name -> 'a option
+    end
+end
 
 
 module rec Type: sig
@@ -38,162 +54,29 @@ module rec Type: sig
 end
 
 and Module: sig
-    type k =
-        | KClass of Class.t
-        | KProtocol of Protocol.t
-        | KValueKind of ValueKind.t
-        | KTaggedKind of TaggedKind.t
-        | KNative of Native.t
+    class type t = object
+        inherit Cast.t
 
-    type t = {
-        m_name: string;
-        mutable m_params: type_index list;
-        mutable m_types: Type.Table.t;
-        mutable m_sels: tsel list;
-        mutable m_consts: Constant.t list;
-        m_type: k
-    }
+        method name: string
+        method params: type_index list
+        method types: Type.Table.t
+        method sels: tsel list
+        method consts: Constant.t list
 
-    val resolve_type: t -> type_index -> Type.t option
+        method resolve_type: type_index -> Type.t option
 
-    val get_type: t -> type_index -> Type.t
+        method get_type: type_index -> Type.t
 
-    (*val most_specific_module: modules: t list -> args: Type.t list -> t option*)
+        (*method most_specific_module: modules: t list -> args: Type.t list -> t option*)
+    end
 end
 
-and Class: sig
-    type t = {
-        mutable t_parents: type_index list;
-    
-        mutable t_static_members: tmember list;
-        mutable t_members: tmember list;
-    
-        mutable t_default_init: Methods.base_method option;
-        mutable t_static_init: Methods.base_method option;
-        
-        mutable t_inits: Methods.method_table;
-        
-        mutable t_static_methods: Methods.method_table;
-        mutable t_methods: Methods.method_table;
-        
-        mutable t_casts: Methods.cast_table;
-    
-        mutable t_operators: Methods.operator_table;
-    
-        mutable t_deinit: Methods.base_method option;
-        mutable t_static_deinit: Methods.base_method option
-    }
 
-    val create:
-        ?parents: type_index list ->
-        ?static_members: tmember list ->
-        ?members: tmember list ->
-        ?default_init: Methods.base_method option ->
-        ?static_init: Methods.base_method option ->
-        ?inits: Methods.method_table ->
-        ?static_methods: Methods.method_table ->
-        ?methods: Methods.method_table ->
-        ?casts: Methods.cast_table ->
-        ?operators: Methods.operator_table ->
-        ?deinit: Methods.base_method option ->
-        ?static_deinit: Methods.base_method option ->
-        unit -> t
-end
-
-and Protocol: sig
-    type t = {
-        mutable t_parents: type_index list;
-
-        mutable t_static_members: tmember list;
-        mutable t_members: tmember list;
-        
-        mutable t_static_methods: Methods.method_table;
-        mutable t_methods: Methods.method_table;
-        
-        mutable t_casts: Methods.cast_table;
-
-        mutable t_operators: Methods.operator_table
-    }
-end
-
-and ValueKind: sig
-    type case =
-        | CConst of const_index
-    
-    type t = {
-        k_is_flags: bool;
-        
-        vk_repr: type_index;
-        mutable vk_cases: case list;
-
-        mutable t_static_methods: Methods.method_table;
-        mutable t_methods: Methods.method_table;
-        
-        mutable t_casts: Methods.cast_table;
-
-        mutable t_operators: Methods.operator_table
-    }
-end
-
-and TaggedKind: sig
-    type case = {
-        mutable slots: type_index list
-    }
-
-    type t = {
-        k_is_flags: bool;
-
-        mutable tk_cases: case list;
-
-        mutable t_parents: type_index list;
-
-        mutable t_static_members: tmember list;
-        mutable t_members: tmember list;
-
-        mutable t_default_init: Methods.base_method option;
-        
-        mutable t_static_methods: Methods.method_table;
-        mutable t_methods: Methods.method_table;
-        
-        mutable t_casts: Methods.cast_table;
-
-        mutable t_operators: Methods.operator_table
-    }
-end
-
-and Native: sig
-    type k =
-        | NVoid
-        | NBool
-        | NInt8
-        | NUInt8
-        | NInt16
-        | NUInt16
-        | NInt32
-        | NUInt32
-        | NInt64
-        | NUInt64
-        | NInt128
-        | NUInt128
-        | NDec
-        | NPtr of type_index
-        | NOpaque
-    
-    type t = {
-        n_kind: k;
-
-        mutable t_static_methods: Methods.method_table;
-        mutable t_methods: Methods.method_table;
-        
-        mutable t_casts: Methods.cast_table;
-
-        mutable t_operators: Methods.operator_table
-    }
-end
-
-and Methods: sig
+module Methods: sig
     type method_attrs = {
-        is_hidden: bool
+        is_hidden: bool;
+        is_no_inherit: bool;
+        is_native: string option
     }
 
     type section = {
@@ -234,8 +117,7 @@ and Methods: sig
         | BLe
 
 
-
-        class base_method:
+    class base_method:
         attrs: method_attrs ->
         registers: type_index list ->
         sections: section list ->
@@ -324,3 +206,225 @@ and Methods: sig
         | KCast
         | KOperator*)
 end
+
+
+type 'a Cast.class_name += Module_t: Module.t Cast.class_name
+
+class virtual tmodule:
+    name: string ->
+    params: type_index list ->
+    types: Type.Table.t ->
+    sels: tsel list ->
+    consts: Constant.t list ->
+object
+    inherit Module.t
+end
+
+
+module Class: sig
+    class type t = object
+        inherit tmodule
+
+        method parents: type_index list
+        method static_members: tmember list
+        method members: tmember list
+        method default_init: Methods.base_method option
+        method static_init: Methods.base_method option
+        method inits: Methods.method_table
+        method static_methods: Methods.method_table
+        method methods: Methods.method_table
+        method casts: Methods.cast_table
+        method operators: Methods.operator_table
+        method deinit: Methods.base_method option
+        method static_deinit: Methods.base_method option
+    end
+end
+
+type 'a Cast.class_name += Class_t: Class.t Cast.class_name
+
+class tclass:
+    name: string ->
+    params: type_index list ->
+    types: Type.Table.t ->
+    sels: tsel list ->
+    consts: Constant.t list ->
+    parents: type_index list ->
+    static_members: tmember list ->
+    members: tmember list ->
+    default_init: Methods.base_method option ->
+    static_init: Methods.base_method option ->
+    inits: Methods.method_table ->
+    static_methods: Methods.method_table ->
+    methods: Methods.method_table ->
+    casts: Methods.cast_table ->
+    operators: Methods.operator_table ->
+    deinit: Methods.base_method option ->
+    static_deinit: Methods.base_method option ->
+object
+    inherit Class.t
+end
+
+
+module Protocol: sig
+    class type t = object
+        inherit tmodule
+
+        method parents: type_index list
+        method static_members: tmember list
+        method members: tmember list
+        method static_methods: Methods.method_table
+        method methods: Methods.method_table
+        method casts: Methods.cast_table
+        method operators: Methods.operator_table
+    end
+end
+
+type 'a Cast.class_name += Protocol_t: Protocol.t Cast.class_name
+
+class tprotocol:
+    name: string ->
+    params: type_index list ->
+    types: Type.Table.t ->
+    sels: tsel list ->
+    consts: Constant.t list ->
+    parents: type_index list ->
+    static_members: tmember list ->
+    members: tmember list ->
+    static_methods: Methods.method_table ->
+    methods: Methods.method_table ->
+    casts: Methods.cast_table ->
+    operators: Methods.operator_table ->
+object
+    inherit Protocol.t
+end
+
+
+module ValueKind: sig
+    class type t = object
+        inherit tmodule
+
+        method is_flags: bool
+        method repr: type_index
+        method cases: const_index list
+        method static_methods: Methods.method_table
+        method methods: Methods.method_table
+        method casts: Methods.cast_table
+        method operators: Methods.operator_table
+    end
+end
+
+type 'a Cast.class_name += ValueKind_t: ValueKind.t Cast.class_name
+    
+class tvalue_kind:
+    name: string ->
+    params: type_index list ->
+    types: Type.Table.t ->
+    sels: tsel list ->
+    consts: Constant.t list ->
+    is_flags: bool ->
+    repr: type_index ->
+    cases: const_index list ->
+    static_methods: Methods.method_table ->
+    methods: Methods.method_table ->
+    casts: Methods.cast_table ->
+    operators: Methods.operator_table ->
+object
+    inherit ValueKind.t
+end
+
+
+module TaggedKind: sig
+    class type t = object
+        inherit tmodule
+
+        method is_flags: bool
+        method cases: type_index list list
+        method parents: type_index list
+        method static_members: tmember list
+        method members: tmember list
+        method default_init: Methods.base_method option
+        method static_methods: Methods.method_table
+        method methods: Methods.method_table
+        method casts: Methods.cast_table
+        method operators: Methods.operator_table
+    end
+end
+
+type 'a Cast.class_name += TaggedKind_t: TaggedKind.t Cast.class_name
+
+class ttagged_kind:
+    name: string ->
+    params: type_index list ->
+    types: Type.Table.t ->
+    sels: tsel list ->
+    consts: Constant.t list ->
+    is_flags: bool ->
+    cases: type_index list list ->
+    parents: type_index list ->
+    static_members: tmember list ->
+    members: tmember list ->
+    default_init: Methods.base_method option ->
+    static_methods: Methods.method_table ->
+    methods: Methods.method_table ->
+    casts: Methods.cast_table ->
+    operators: Methods.operator_table ->
+object
+    inherit TaggedKind.t
+end
+
+
+type knative =
+    | NVoid
+    | NBool
+    | NInt8
+    | NUInt8
+    | NInt16
+    | NUInt16
+    | NInt32
+    | NUInt32
+    | NInt64
+    | NUInt64
+    | NInt128
+    | NUInt128
+    | NDec
+    | NPtr of type_index
+    | NOpaque
+
+module Native: sig
+    class type t = object
+        inherit tmodule
+
+        method kind: knative
+        method static_methods: Methods.method_table
+        method methods: Methods.method_table
+        method casts: Methods.cast_table
+        method operators: Methods.operator_table
+    end
+end
+
+type 'a Cast.class_name += Native_t: Native.t Cast.class_name
+
+class tnative:
+    name: string ->
+    params: type_index list ->
+    types: Type.Table.t ->
+    sels: tsel list ->
+    consts: Constant.t list ->
+    kind: knative ->
+    static_methods: Methods.method_table ->
+    methods: Methods.method_table ->
+    casts: Methods.cast_table ->
+    operators: Methods.operator_table ->
+object
+    inherit Native.t
+end
+
+
+type kmodule =
+    | KClass of tclass
+    | KProtocol of tprotocol
+    | KValueKind of tvalue_kind
+    | KTaggedKind of ttagged_kind
+    | KNative of tnative
+
+val get_module_kind: tmodule -> kmodule

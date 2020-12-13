@@ -18,9 +18,9 @@ let create () =
 
 let lookup_module {modules; _} name = Hashtbl.find_multi modules name
 
-let add_module {modules; _} m = let open Module in
+let add_module {modules; _} m =
     Hashtbl.add_multi modules
-        ~key: m.m_name
+        ~key: m#name
         ~data: m
 
 let rec resolve_module vm this t =
@@ -61,7 +61,7 @@ let rec simplify_type vm this t =
 
 let get_simplified_type vm this index =
     index
-    |> Module.get_type this
+    |> this#get_type
     |> simplify_type vm this
 
 (* Uh... might wanna revisit this at some point *)
@@ -125,8 +125,8 @@ module Checks = struct
                     | None -> `Failed
             end
             
-            | TModule {m_params; _}, TParam {parents; params; _} -> begin
-                match m_params, params with
+            | TModule m, TParam {parents; params; _} -> begin
+                match m#params, params with
                 | _, [] -> begin
                     match match_parents ~strict: false vm this ~target: target' ~parents with
                     | Some parent_results -> `IsParent (List.zip_exn parents parent_results)
@@ -178,12 +178,8 @@ module Checks = struct
         in
         loop [] parents
     
-    and match_module ?(strict=true) vm this ~target ~parent =
+    and match_module ?(strict=true) vm this ~(target: tmodule) ~(parent: tmodule) =
         let open Poly in
-        let open Module in
-        let open Class in
-        let open Protocol in
-        let open TaggedKind in
 
         let match_some_parents target' parents' =
             let rec loop acc pl =
@@ -198,9 +194,9 @@ module Checks = struct
             loop [] parents'
         in
 
-        match target, parent with
-        | {m_name=n; m_params=[]; _}, {m_name=n'; m_params=[]; _} when n = n' -> `IsExact
-        | {m_name=n; m_params=g; m_type=t; _}, {m_name=n'; m_params=g'; m_type=t'; _} -> begin
+        match (target#name, target#params), (parent#name, parent#params) with
+        | (n, []), (n', []) when n = n' -> `IsExact
+        | (n, g), (n', g') -> begin
             let same_name = n = n' in
             let exact_or =
                 if same_name then (fun _ -> `IsExact)
@@ -215,8 +211,8 @@ module Checks = struct
                 | Some results when same_name -> `IsParametric(res, results)
                 | _ -> `Failed
             in
-            
-            match t, t' with
+
+            match get_module_kind target, get_module_kind parent with
             (*
             class A {}
             class B of A {}
@@ -226,10 +222,10 @@ module Checks = struct
             my bad (B) = A[new]
             my good (A) = B[new] ;-- only without `strict`
             *)
-            | KClass {t_parents=[]; _}, KClass _ -> match_params `IsExact
+            | KClass tc, KClass _ when tc#parents = [] -> match_params `IsExact
             | KClass _, KClass _ when strict -> match_params `IsExact
-            | KClass {t_parents=pl; _}, (KClass _ | KProtocol _) -> begin
-                match match_some_parents (TModule parent) pl with
+            | KClass tc, (KClass _ | KProtocol _) -> begin
+                match match_some_parents (TModule parent) tc#parents with
                 | Some results -> `IsParent results
                 | None -> `Failed
             end
@@ -243,9 +239,9 @@ module Checks = struct
             my bad (Sequential) = Positional[new]
             my good (Positional) = Sequential[new]
             *)
-            | KProtocol {t_parents=[]; _}, KProtocol _ -> match_params `IsExact
-            | KProtocol {t_parents=pl; _}, KProtocol _ -> begin
-                match match_some_parents (TModule parent) pl with
+            | KProtocol tp, KProtocol _ when tp#parents = [] -> match_params `IsExact
+            | KProtocol tp, KProtocol _ -> begin
+                match match_some_parents (TModule parent) tp#parents with
                 | Some results -> `IsParent results
                 | None -> `Failed
             end
@@ -261,20 +257,20 @@ module Checks = struct
             my good (B) = A[a]
             my bad (A) = B[b]
             *)
-            | KTaggedKind {k_is_flags=f; _}, KTaggedKind {k_is_flags=f'; _} when f <> f' -> `Failed
-            | KTaggedKind _, KTaggedKind {t_parents=[]; _} -> match_params `IsExact
-            | KTaggedKind _, KTaggedKind {t_parents=pl; _} -> begin
-                match match_some_parents (TModule target) pl with
+            | KTaggedKind tt, KTaggedKind pt when tt#is_flags <> pt#is_flags -> `Failed
+            | KTaggedKind _, KTaggedKind pt when pt#parents = [] -> match_params `IsExact
+            | KTaggedKind _, KTaggedKind pt -> begin
+                match match_some_parents (TModule target) pt#parents with
                 | Some results -> `IsDerived results
                 | None -> `Failed
             end
-            | KTaggedKind {t_parents=pl; _}, KProtocol _ -> begin
-                match match_some_parents (TModule parent) pl with
+            | KTaggedKind tt, KProtocol _ -> begin
+                match match_some_parents (TModule parent) tt#parents with
                 | Some results -> `IsParent results
                 | None -> `Failed
             end
 
-            | KNative {n_kind=nk; _}, KNative {n_kind=nk'; _} -> begin
+            | KNative tn, KNative pn -> begin
                 let match_ptrs i i' = (* TODO: respect void pointers here *)
                     let e = get_simplified_type vm target i in
                     let e' = get_simplified_type vm parent i' in
@@ -285,7 +281,7 @@ module Checks = struct
 
                 match g, g' with
                 | [], [] -> begin
-                    match nk, nk' with
+                    match tn#kind, pn#kind with
                     | NVoid, NVoid
                     | NBool, NBool
                     | NInt8, NInt8
@@ -301,7 +297,7 @@ module Checks = struct
                     | _, _ -> `Failed
                 end
                 | _, _ ->
-                    match nk, nk' with
+                    match tn#kind, pn#kind with
                     | NPtr i, NPtr i' -> match_ptrs i i'
                     | _, _ -> `Failed
             end
