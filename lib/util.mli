@@ -8,6 +8,8 @@ val (==): 'a -> 'a -> bool
 
 val (!=): 'a -> 'a -> bool
 
+val poly_hash: ('a * 'b) list -> ('a, 'b) Base.Hashtbl.t
+
 
 (* A large amount of this is taken from Stdint *)
 module BetterStdint: sig
@@ -146,3 +148,5 @@ module BetterStdint: sig
     module Uint64: Int with type t = uint64
     module Uint128: Int with type t = uint128
 end
+
+(*module Ring_buffer: functor(E: sig type t end) -> CCRingBuffer.S with type Array.t = E.t array and type Array.elt = E.t*)

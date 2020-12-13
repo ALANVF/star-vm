@@ -1,22 +1,23 @@
 module Hashtbl = Base.Hashtbl
 open Starvm
 open Starvm.Types
+open Starvm.Util
 
 let load_natives vm =
     let basic name repr =
         ((new tnative
             ~name: name
             ~params: []
-            ~types: (Type.Table.create())
+            ~types: (poly_hash [])
             ~sels: []
             ~consts: []
             ~kind: repr
-            ~static_methods: (Hashtbl.Poly.create())
-            ~methods: (Hashtbl.Poly.create())
-            ~casts: (Hashtbl.Poly.create())
+            ~static_methods: (poly_hash [])
+            ~methods: (poly_hash [])
+            ~casts: (poly_hash [])
             ~operators: {
-                o_unary = Hashtbl.Poly.create();
-                o_binary = Hashtbl.Poly.create()
+                o_unary = poly_hash [];
+                o_binary = poly_hash []
             }) :> tmodule)
     in
     
@@ -25,7 +26,7 @@ let load_natives vm =
         ((new tclass
             ~name: "Star.Native"
             ~params: []
-            ~types: (Type.Table.create())
+            ~types: (poly_hash [])
             ~sels: []
             ~consts: []
             ~parents: []
@@ -33,13 +34,13 @@ let load_natives vm =
             ~members: []
             ~default_init: None
             ~static_init: None
-            ~inits: (Hashtbl.Poly.create())
-            ~static_methods: (Hashtbl.Poly.create())
-            ~methods: (Hashtbl.Poly.create())
-            ~casts: (Hashtbl.Poly.create())
+            ~inits: (poly_hash [])
+            ~static_methods: (poly_hash [])
+            ~methods: (poly_hash [])
+            ~casts: (poly_hash [])
             ~operators: {
-                o_unary = Hashtbl.Poly.create();
-                o_binary = Hashtbl.Poly.create()
+                o_unary = poly_hash [];
+                o_binary = poly_hash []
             }
             ~deinit: None
             ~static_deinit: None) :> tmodule)
@@ -56,16 +57,16 @@ let load_natives vm =
         ((new tnative
             ~name: "Star.Native.Ptr"
             ~params: [1]
-            ~types: (Hashtbl.Poly.of_alist_exn [1, Type.TImport {name = "Star.Void"; circular = None}])
+            ~types: (poly_hash [1, Type.TImport {name = "Star.Void"; circular = None}])
             ~sels: []
             ~consts: []
             ~kind: (NPtr 1)
-            ~static_methods: (Hashtbl.Poly.create())
-            ~methods: (Hashtbl.Poly.create())
-            ~casts: (Hashtbl.Poly.create())
+            ~static_methods: (poly_hash [])
+            ~methods: (poly_hash [])
+            ~casts: (poly_hash [])
             ~operators: {
-                o_unary = Hashtbl.Poly.create();
-                o_binary = Hashtbl.Poly.create()
+                o_unary = poly_hash [];
+                o_binary = poly_hash []
             }) :> tmodule)
         ;
         basic "Star.Native.Opaque" NOpaque

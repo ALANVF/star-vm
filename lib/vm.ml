@@ -13,7 +13,7 @@ let todo () = failwith "NYI"
 
 let create () =
     {
-        modules = Hashtbl.Poly.create()
+        modules = poly_hash []
     }
 
 let lookup_module {modules; _} name = Hashtbl.find_multi modules name
@@ -178,7 +178,7 @@ module Checks = struct
         in
         loop [] parents
     
-    and match_module ?(strict=true) vm this ~(target: tmodule) ~(parent: tmodule) =
+    and match_module ?(strict=true) vm this ~target ~parent =
         let open Poly in
 
         let match_some_parents target' parents' =

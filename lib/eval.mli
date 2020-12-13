@@ -36,7 +36,7 @@ end
 
 type context = {
     vm: Vm.t;
-    this: Module.t;
+    this: tmodule;
     routine: base_method;
     caller: tvalue option;
     regs: tvalue Uniform_array.t;
@@ -44,4 +44,4 @@ type context = {
 }
 
 
-val create_eval_context: Vm.t -> Module.t -> base_method -> tvalue option -> tvalue list -> context
+val create_eval_context: Vm.t -> tmodule -> base_method -> tvalue option -> tvalue list -> context

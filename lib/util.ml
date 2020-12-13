@@ -8,6 +8,8 @@ let (==) = Base.phys_equal
 
 let (!=) a b = not (a == b) [@@inline always]
 
+let poly_hash: ('a * 'b) list -> ('a, 'b) Base.Hashtbl.t = Base.Hashtbl.Poly.of_alist_exn
+
 
 (* A large amount of this is taken from Stdint *)
 module BetterStdint = struct
@@ -176,3 +178,8 @@ module BetterStdint = struct
     module Uint64 = Int_wrapper(Stdint.Uint64)
     module Uint128 = Int_wrapper(Stdint.Uint128)
 end
+
+(*module Ring_buffer(E: sig type t end) = CCRingBuffer.Make(struct
+    type t = E.t
+    let dummy = Obj.magic 0
+end)*)
